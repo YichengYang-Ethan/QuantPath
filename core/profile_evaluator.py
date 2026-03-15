@@ -210,7 +210,7 @@ def _score_cs(profile: UserProfile) -> tuple[float, list[dict[str, Any]]]:
     """
     cw = profile.coursework
 
-    cs_major_score = 10.0 if _has_major(profile, {"computer science", "cs", "computing"}) else 0.0
+    cs_major_score = 10.0 if _has_major(profile, {"computer science", "computing"}) else 0.0
 
     factors = [
         ("cpp_proficiency",      0.30, _best_score_for_category(cw, "programming_cpp")),
