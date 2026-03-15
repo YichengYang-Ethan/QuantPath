@@ -6,11 +6,14 @@ a per-programme fit score (0-100) based on:
     - Prerequisite match score
     - Programme acceptance rate
     - Overall evaluation score from the profile evaluator
+
+When calibration data is available, data-driven thresholds override the
+default heuristic rules.
 """
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 
 from .models import EvaluationResult, ProgramData, UserProfile
 from .prerequisite_matcher import match_prerequisites
@@ -24,18 +27,43 @@ def _classify(
     user_gpa: float,
     program_avg_gpa: float,
     acceptance_rate: float,
+    overrides: Optional[dict[str, Any]] = None,
 ) -> str:
     """Classify a programme as reach, target, or safety.
 
-    Rules (applied in order):
+    When *overrides* are provided (from calibration), uses data-driven
+    GPA thresholds instead of the default heuristic rules.
+
+    Default rules (applied in order):
         1. If acceptance_rate < 0.08 OR user_gpa < program_avg_gpa:
            ``"reach"``
         2. If acceptance_rate > 0.15 AND user_gpa >= program_avg_gpa + 0.1:
            ``"safety"``
         3. Otherwise: ``"target"``
+
+    Calibrated rules (when overrides provided):
+        1. If user_gpa < gpa_floor: ``"reach"``
+        2. If user_gpa >= safety_gpa_threshold: ``"safety"``
+        3. If user_gpa >= reach_gpa_threshold: ``"target"``
+        4. Otherwise: ``"reach"``
     """
-    acceptance_rate = acceptance_rate or 0.15  # default to moderate if unknown
-    program_avg_gpa = program_avg_gpa or 3.80  # default if unknown
+    # Use calibrated thresholds when available
+    if overrides and overrides.get("confidence") in ("medium", "high"):
+        gpa_floor = overrides.get("gpa_floor", 0)
+        reach_threshold = overrides.get("reach_gpa_threshold", program_avg_gpa)
+        safety_threshold = overrides.get("safety_gpa_threshold", program_avg_gpa + 0.1)
+
+        if user_gpa < gpa_floor:
+            return "reach"
+        if user_gpa >= safety_threshold:
+            return "safety"
+        if user_gpa >= reach_threshold:
+            return "target"
+        return "reach"
+
+    # Fallback: default heuristic rules
+    acceptance_rate = acceptance_rate or 0.15
+    program_avg_gpa = program_avg_gpa or 3.80
     if acceptance_rate < 0.08 or user_gpa < program_avg_gpa:
         return "reach"
     if acceptance_rate > 0.15 and user_gpa >= program_avg_gpa + 0.1:
@@ -112,6 +140,7 @@ def rank_schools(
     profile: UserProfile,
     programs: list[ProgramData],
     evaluation: EvaluationResult,
+    calibration_overrides: Optional[dict[str, dict[str, Any]]] = None,
 ) -> dict[str, Any]:
     """Rank and classify a set of programmes for the given applicant.
 
@@ -124,6 +153,9 @@ def rank_schools(
     evaluation:
         A pre-computed :class:`EvaluationResult` from the profile
         evaluator.
+    calibration_overrides:
+        Optional dict of per-program overrides from the calibrator.
+        When provided, classification uses data-driven thresholds.
 
     Returns
     -------
@@ -143,16 +175,19 @@ def rank_schools(
         ``avg_gpa``.
     """
     results: list[dict[str, Any]] = []
+    overrides = calibration_overrides or {}
 
     for prog in programs:
         # Prerequisite matching.
         pmatch = match_prerequisites(profile, prog)
 
-        # Classification.
+        # Classification (with optional data-driven overrides).
+        prog_overrides = overrides.get(prog.id)
         category = _classify(
             user_gpa=profile.gpa,
             program_avg_gpa=prog.avg_gpa,
             acceptance_rate=prog.acceptance_rate,
+            overrides=prog_overrides,
         )
 
         # Fit score.
@@ -164,18 +199,24 @@ def rank_schools(
             overall_eval_score=evaluation.overall_score,
         )
 
-        results.append(
-            {
-                "program_id": prog.id,
-                "name": prog.name,
-                "university": prog.university,
-                "category": category,
-                "fit_score": fit,
-                "prereq_match_score": pmatch.match_score,
-                "acceptance_rate": prog.acceptance_rate,
-                "avg_gpa": prog.avg_gpa,
-            }
-        )
+        result_entry: dict[str, Any] = {
+            "program_id": prog.id,
+            "name": prog.name,
+            "university": prog.university,
+            "category": category,
+            "fit_score": fit,
+            "prereq_match_score": pmatch.match_score,
+            "acceptance_rate": prog.acceptance_rate,
+            "avg_gpa": prog.avg_gpa,
+        }
+
+        # Add calibration info if available
+        if prog_overrides:
+            result_entry["calibrated"] = True
+            result_entry["confidence"] = prog_overrides.get("confidence", "low")
+            result_entry["sample_size"] = prog_overrides.get("sample_size", 0)
+
+        results.append(result_entry)
 
     # Sort each bucket by fit_score descending.
     results.sort(key=lambda r: -r["fit_score"])

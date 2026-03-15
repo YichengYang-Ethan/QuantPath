@@ -8,6 +8,8 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
+from core.admission_data import load_admission_csv, load_all_admission_data, summarize_records
+from core.calibrator import calibrate_all, generate_ranker_overrides
 from core.data_loader import load_all_programs, load_profile
 from core.gap_advisor import analyze_gaps
 from core.interview_prep import (
@@ -610,6 +612,180 @@ def cmd_gaps(args: argparse.Namespace) -> None:
     console.print()
 
 
+def cmd_stats(args: argparse.Namespace) -> None:
+    """Show statistics from real admission data."""
+    if args.file:
+        records = load_admission_csv(args.file)
+    else:
+        records = load_all_admission_data()
+
+    if not records:
+        console.print("[yellow]No admission data found.[/yellow]")
+        console.print("[dim]Add CSV files to data/admissions/ or use --file.[/dim]")
+        return
+
+    summary = summarize_records(records)
+
+    console.print()
+    console.print(
+        Panel(
+            f"[bold]{summary['total_records']}[/bold] records from "
+            f"[bold]{summary['unique_applicants']}[/bold] applicants  |  "
+            f"Sources: {', '.join(summary['sources'])}  |  "
+            f"Seasons: {', '.join(summary['seasons'])}",
+            title="Admission Data Statistics",
+            border_style="cyan",
+        )
+    )
+
+    # Per-program breakdown
+    table = Table(border_style="cyan", title="Per-Program Breakdown")
+    table.add_column("Program", style="bold")
+    table.add_column("Accepted", style="green", justify="right")
+    table.add_column("Rejected", style="red", justify="right")
+    table.add_column("Waitlisted", style="yellow", justify="right")
+    table.add_column("Total", justify="right")
+    table.add_column("Obs. Rate", justify="right")
+
+    for prog_id, counts in sorted(summary["programs"].items()):
+        acc = counts.get("accepted", 0)
+        rej = counts.get("rejected", 0)
+        wl = counts.get("waitlisted", 0)
+        total = acc + rej + wl
+        decided = acc + rej
+        rate = f"{acc / decided:.0%}" if decided > 0 else "N/A"
+        table.add_row(prog_id, str(acc), str(rej), str(wl), str(total), rate)
+
+    console.print(table)
+    console.print()
+
+    # GPA distribution
+    from core.admission_data import compute_all_program_stats
+
+    all_stats = compute_all_program_stats(records)
+    if all_stats:
+        console.print(Panel("Accepted vs Rejected GPA Comparison", border_style="cyan"))
+        gpa_table = Table(border_style="cyan")
+        gpa_table.add_column("Program", style="bold")
+        gpa_table.add_column("Avg GPA (Acc)", style="green", justify="right")
+        gpa_table.add_column("Avg GPA (Rej)", style="red", justify="right")
+        gpa_table.add_column("Gap", justify="right")
+        gpa_table.add_column("Top Feature", justify="right")
+
+        for pid, stats in sorted(all_stats.items()):
+            if stats.accepted == 0:
+                continue
+            gpa_acc = f"{stats.avg_gpa_accepted:.2f}" if stats.avg_gpa_accepted else "N/A"
+            gpa_rej = f"{stats.avg_gpa_rejected:.2f}" if stats.avg_gpa_rejected else "N/A"
+            gap = ""
+            if stats.avg_gpa_accepted and stats.avg_gpa_rejected:
+                diff = stats.avg_gpa_accepted - stats.avg_gpa_rejected
+                gap = f"+{diff:.2f}" if diff >= 0 else f"{diff:.2f}"
+
+            top_feat = ""
+            if stats.feature_importance:
+                top = max(stats.feature_importance, key=lambda k: abs(stats.feature_importance[k]))
+                top_feat = f"{top} ({stats.feature_importance[top]:.2f})"
+
+            gpa_table.add_row(pid, gpa_acc, gpa_rej, gap, top_feat)
+
+        console.print(gpa_table)
+        console.print()
+
+
+def cmd_calibrate(args: argparse.Namespace) -> None:
+    """Calibrate scoring model using real admission data."""
+    if args.file:
+        records = load_admission_csv(args.file)
+    else:
+        records = load_all_admission_data()
+
+    if not records:
+        console.print("[yellow]No admission data found.[/yellow]")
+        console.print("[dim]Add CSV files to data/admissions/ or use --file.[/dim]")
+        return
+
+    console.print()
+    console.print(Panel("Running Calibration...", border_style="cyan"))
+
+    result = calibrate_all(records)
+
+    # Thresholds table
+    table = Table(border_style="cyan", title="Calibrated Program Thresholds")
+    table.add_column("Program", style="bold")
+    table.add_column("GPA Floor", justify="right")
+    table.add_column("GPA Target", justify="right")
+    table.add_column("GPA Safe", justify="right")
+    table.add_column("Obs. Rate", justify="right")
+    table.add_column("Samples", justify="right")
+    table.add_column("Confidence")
+
+    for pid, threshold in sorted(result.program_thresholds.items()):
+        conf_color = {"high": "green", "medium": "yellow", "low": "red"}.get(
+            threshold.confidence, "white"
+        )
+        table.add_row(
+            pid,
+            f"{threshold.gpa_floor:.2f}",
+            f"{threshold.gpa_target:.2f}",
+            f"{threshold.gpa_safe:.2f}",
+            f"{threshold.observed_acceptance_rate:.0%}",
+            str(threshold.sample_size),
+            f"[{conf_color}]{threshold.confidence}[/{conf_color}]",
+        )
+
+    console.print(table)
+
+    # Global feature weights
+    if result.global_feature_weights:
+        console.print()
+        console.print(Panel("Global Feature Importance", border_style="cyan"))
+        fw_table = Table(border_style="cyan")
+        fw_table.add_column("Feature", style="bold")
+        fw_table.add_column("Weight", justify="right")
+        fw_table.add_column("Bar", width=20)
+
+        for feat, weight in result.global_feature_weights.items():
+            bar_len = round(weight * 40)
+            fw_table.add_row(feat, f"{weight:.1%}", "█" * bar_len)
+
+        console.print(fw_table)
+
+    # Accuracy report
+    acc = result.accuracy_report
+    if acc.get("total_predictions", 0) > 0:
+        console.print()
+        accuracy_pct = acc.get("accuracy", 0)
+        acc_color = "green" if accuracy_pct >= 0.7 else "yellow" if accuracy_pct >= 0.5 else "red"
+        console.print(
+            f"  [bold]Model Accuracy:[/bold] [{acc_color}]{accuracy_pct:.0%}[/{acc_color}]  "
+            f"({acc['correct']} correct / {acc['correct'] + acc['incorrect']} decided, "
+            f"{acc['borderline']} borderline)"
+        )
+
+    # Recommendations
+    if result.recommendations:
+        console.print()
+        console.print(Panel("Recommendations", border_style="yellow"))
+        for rec in result.recommendations:
+            console.print(f"  - {rec}")
+
+    console.print()
+
+    # If --apply flag, show the overrides that would be applied
+    if args.apply:
+        overrides = generate_ranker_overrides(result)
+        if overrides:
+            console.print(Panel("Ranker Overrides (Applied)", border_style="green"))
+            for pid, ov in sorted(overrides.items()):
+                console.print(
+                    f"  {pid}: reach<{ov['reach_gpa_threshold']:.2f} "
+                    f"safe>={ov['safety_gpa_threshold']:.2f} "
+                    f"[dim](n={ov['sample_size']}, {ov['confidence']})[/dim]"
+                )
+            console.print()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="quantpath",
@@ -675,6 +851,17 @@ def main() -> None:
     p_gaps = subparsers.add_parser("gaps", help="Analyze profile gaps and suggest improvements")
     p_gaps.add_argument("--profile", "-p", required=True, help="Path to profile YAML")
 
+    # stats (real data)
+    p_stats = subparsers.add_parser("stats", help="Show statistics from real admission data")
+    p_stats.add_argument("--file", "-f", help="Path to a specific CSV file (default: all)")
+
+    # calibrate (real data)
+    p_cal = subparsers.add_parser("calibrate", help="Calibrate model using real admission data")
+    p_cal.add_argument("--file", "-f", help="Path to a specific CSV file (default: all)")
+    p_cal.add_argument(
+        "--apply", action="store_true", help="Show ranker overrides that would be applied"
+    )
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -690,6 +877,8 @@ def main() -> None:
         "compare": cmd_compare,
         "interview": cmd_interview,
         "gaps": cmd_gaps,
+        "stats": cmd_stats,
+        "calibrate": cmd_calibrate,
     }
     commands[args.command](args)
 
