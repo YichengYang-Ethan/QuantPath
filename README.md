@@ -111,14 +111,42 @@ $ quantpath programs
   ...
 ```
 
+### Program Comparison
+Compare programs side-by-side on key metrics.
+
+```
+$ quantpath compare --programs cmu-mscf,baruch-mfe,berkeley-mfe
+
+  Attribute          CMU MSCF        Baruch MFE       Berkeley MFE
+  University         Carnegie Mellon  Baruch/CUNY      UC Berkeley
+  Class Size         108              30               80
+  Acceptance Rate    10%              8%               12%
+  Avg GPA            3.86             3.84             3.80
+  GRE Required       Yes              No               Yes
+  Application Fee    $125             $75              $275
+  ...
+```
+
+### Gap Analysis
+Identify weaknesses and get prioritized action recommendations.
+
+```
+$ quantpath gaps --profile my_profile.yaml
+
+  Factor              Dimension   Score    Priority  Recommended Action
+  Real Analysis       math        Missing  High      Take Real Analysis (required by top-5)
+  Stochastic Proc.    math        Missing  High      Take Stochastic Calculus
+  Time Series         statistics  Missing  High      Take Time Series Analysis
+  ...
+
+  Summary:  8 High  2 Medium  1 Low  (11 total gaps)
+```
+
 ## Quick Start
 
 ```bash
-# Install
-pip install quantpath
-
-# Or from source
-git clone https://github.com/YichengYang-Ethan/QuantPath.git
+# Install from source
+git clone https://github.com/MasterAgentAI/QuantPath.git
 cd QuantPath
 pip install -e .
 
@@ -127,6 +155,12 @@ cp examples/sample_profile.yaml my_profile.yaml
 
 # Run evaluation
 quantpath evaluate --profile my_profile.yaml
+
+# Compare programs
+quantpath compare --programs cmu-mscf,baruch-mfe,berkeley-mfe
+
+# Analyze gaps
+quantpath gaps --profile my_profile.yaml
 
 # Check all programs
 quantpath programs
@@ -243,6 +277,10 @@ We welcome contributions! The most impactful ways to help:
 - [x] GRE/TOEFL requirement checker
 - [x] Application timeline generator
 - [x] CLI interface
+- [x] Program comparison (`compare`)
+- [x] Gap analysis with recommendations (`gaps`)
+- [x] Unit test suite (120 tests)
+- [x] GitHub Actions CI
 - [ ] Web dashboard (Next.js)
 - [ ] Course optimizer (fill gaps optimally)
 - [ ] AI essay coach
