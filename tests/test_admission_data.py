@@ -11,6 +11,7 @@ import pytest
 from core.admission_data import (
     AdmissionRecord,
     classify_background,
+    classify_nationality,
     compute_all_program_stats,
     compute_program_stats,
     load_admission_csv,
@@ -102,6 +103,44 @@ class TestClassifyBackground:
 
 
 # ===================================================================
+# Nationality classification
+# ===================================================================
+
+
+class TestClassifyNationality:
+    """Tests for classify_nationality()."""
+
+    @pytest.mark.parametrize(
+        "nationality,expected",
+        [
+            ("美籍", "domestic"),
+            ("US", "domestic"),
+            ("green card", "domestic"),
+            ("绿卡", "domestic"),
+            ("中国大陆", "china"),
+            ("中国", "china"),
+            ("China", "china"),
+            ("港澳台", "hk_tw"),
+            ("香港", "hk_tw"),
+            ("台湾", "hk_tw"),
+            ("HK", "hk_tw"),
+            ("韩国", "other_intl"),
+            ("India", "other_intl"),
+        ],
+    )
+    def test_known_nationalities(self, nationality, expected):
+        assert classify_nationality(nationality) == expected
+
+    def test_empty_defaults_to_china(self):
+        assert classify_nationality("") == "china"
+        assert classify_nationality("不明") == "china"
+
+    def test_case_insensitive(self):
+        assert classify_nationality("CHINA") == "china"
+        assert classify_nationality("Domestic") == "domestic"
+
+
+# ===================================================================
 # Internship scoring
 # ===================================================================
 
@@ -145,9 +184,10 @@ class TestLoadAdmissionCSV:
     def _write_csv(self, rows: list[dict], tmp_dir: str) -> str:
         path = Path(tmp_dir) / "test.csv"
         fieldnames = [
-            "id", "bg_type", "gpa", "gpa_scale", "gre", "toefl", "major",
-            "intern_desc", "has_paper", "has_research", "courses_note",
-            "program", "result", "season", "source",
+            "id", "gender", "bg_type", "nationality", "gpa", "gpa_scale",
+            "gre", "toefl", "major", "intern_desc", "has_paper",
+            "has_research", "courses_note", "program", "result",
+            "season", "source",
         ]
         with open(path, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -160,7 +200,9 @@ class TestLoadAdmissionCSV:
         path = self._write_csv(
             [
                 {
-                    "id": "1", "bg_type": "985", "gpa": "3.8", "gpa_scale": "4",
+                    "id": "1", "gender": "M", "bg_type": "985",
+                    "nationality": "中国大陆",
+                    "gpa": "3.8", "gpa_scale": "4",
                     "gre": "332", "toefl": "112", "major": "数学",
                     "intern_desc": "2段量化实习", "has_paper": "是",
                     "has_research": "是", "courses_note": "",
@@ -176,12 +218,16 @@ class TestLoadAdmissionCSV:
         assert records[0].gpa_normalized == 3.8
         assert records[0].bg_tier == 2
         assert records[0].gre == 332
+        assert records[0].gender == "M"
+        assert records[0].nationality_canonical == "china"
 
     def test_skips_pending(self, tmp_path):
         path = self._write_csv(
             [
                 {
-                    "id": "1", "bg_type": "985", "gpa": "3.8", "gpa_scale": "4",
+                    "id": "1", "gender": "", "bg_type": "985",
+                    "nationality": "",
+                    "gpa": "3.8", "gpa_scale": "4",
                     "gre": "", "toefl": "", "major": "", "intern_desc": "",
                     "has_paper": "", "has_research": "", "courses_note": "",
                     "program": "baruch-mfe", "result": "pending",
@@ -197,7 +243,9 @@ class TestLoadAdmissionCSV:
         path = self._write_csv(
             [
                 {
-                    "id": "1", "bg_type": "211", "gpa": "91.8", "gpa_scale": "100",
+                    "id": "1", "gender": "F", "bg_type": "211",
+                    "nationality": "美籍",
+                    "gpa": "91.8", "gpa_scale": "100",
                     "gre": "331", "toefl": "110+", "major": "金工",
                     "intern_desc": "", "has_paper": "不明", "has_research": "不明",
                     "courses_note": "", "program": "cmu-mscf", "result": "accepted",
@@ -211,6 +259,8 @@ class TestLoadAdmissionCSV:
         assert 3.7 <= records[0].gpa_normalized <= 3.9
         assert records[0].toefl == 110  # stripped '+'
         assert records[0].has_paper is None  # '不明' -> None
+        assert records[0].gender == "F"
+        assert records[0].nationality_canonical == "domestic"
 
     def test_file_not_found(self):
         with pytest.raises(FileNotFoundError):
@@ -228,22 +278,26 @@ class TestComputeStats:
     def _make_records(self) -> list[AdmissionRecord]:
         return [
             AdmissionRecord(
-                id="1", program="baruch-mfe", result="accepted",
+                id="1", gender="M", nationality_canonical="china",
+                program="baruch-mfe", result="accepted",
                 gpa_normalized=3.8, gre=332, bg_tier=2, intern_score=7.0,
                 has_paper=True, has_research=True,
             ),
             AdmissionRecord(
-                id="2", program="baruch-mfe", result="accepted",
+                id="2", gender="F", nationality_canonical="domestic",
+                program="baruch-mfe", result="accepted",
                 gpa_normalized=3.9, gre=335, bg_tier=1, intern_score=8.0,
                 has_paper=True, has_research=True,
             ),
             AdmissionRecord(
-                id="3", program="baruch-mfe", result="rejected",
+                id="3", gender="M", nationality_canonical="china",
+                program="baruch-mfe", result="rejected",
                 gpa_normalized=3.5, gre=325, bg_tier=4, intern_score=2.0,
                 has_paper=False, has_research=False,
             ),
             AdmissionRecord(
-                id="4", program="cmu-mscf", result="accepted",
+                id="4", gender="M", nationality_canonical="china",
+                program="cmu-mscf", result="accepted",
                 gpa_normalized=3.85, gre=333, bg_tier=2, intern_score=6.0,
                 has_paper=None, has_research=None,
             ),
@@ -276,9 +330,29 @@ class TestComputeStats:
         # Should have feature importance because there are accepted and rejected
         assert len(stats.feature_importance) > 0
         assert "gpa" in stats.feature_importance
+        assert "gender_f" in stats.feature_importance
+        assert "domestic" in stats.feature_importance
+
+    def test_gender_stats(self):
+        records = self._make_records()
+        stats = compute_program_stats(records, "baruch-mfe")
+        # 2 accepted: 1 M + 1 F -> female_rate = 0.5
+        assert stats.female_rate_accepted == pytest.approx(0.5, rel=0.01)
+
+    def test_nationality_dist(self):
+        records = self._make_records()
+        stats = compute_program_stats(records, "baruch-mfe")
+        # 2 accepted: 1 china + 1 domestic
+        assert stats.nationality_dist_accepted["china"] == 1
+        assert stats.nationality_dist_accepted["domestic"] == 1
 
     def test_summarize(self):
         records = self._make_records()
         summary = summarize_records(records)
         assert summary["total_records"] == 4
         assert "baruch-mfe" in summary["programs"]
+        assert "gender_dist" in summary
+        assert summary["gender_dist"]["M"] == 3
+        assert summary["gender_dist"]["F"] == 1
+        assert "nationality_dist" in summary
+        assert summary["nationality_dist"]["china"] == 3

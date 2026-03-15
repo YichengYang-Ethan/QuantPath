@@ -209,28 +209,28 @@ def predict_outcome(
     score = 0.0
     max_score = 0.0
 
-    # GPA component (40%)
-    weight_gpa = 0.4
+    # GPA component (35%)
+    weight_gpa = 0.35
     max_score += weight_gpa
     if threshold.gpa_target > 0:
         gpa_ratio = record.gpa_normalized / threshold.gpa_target
         score += weight_gpa * min(1.0, gpa_ratio)
 
-    # Background tier (25%)
-    weight_bg = 0.25
+    # Background tier (20%)
+    weight_bg = 0.20
     max_score += weight_bg
     if threshold.max_bg_tier_accepted > 0:
         bg_ratio = 1.0 - (record.bg_tier - 1) / 4.0  # tier 1=1.0, tier 5=0.0
         score += weight_bg * max(0.0, bg_ratio)
 
-    # Intern score (20%)
-    weight_intern = 0.2
+    # Intern score (18%)
+    weight_intern = 0.18
     max_score += weight_intern
     if record.intern_score > 0:
         score += weight_intern * min(1.0, record.intern_score / 8.0)
 
-    # Research/paper bonus (15%)
-    weight_research = 0.15
+    # Research/paper bonus (12%)
+    weight_research = 0.12
     max_score += weight_research
     bonus = 0.0
     if record.has_paper:
@@ -238,6 +238,29 @@ def predict_outcome(
     if record.has_research:
         bonus += 0.5
     score += weight_research * bonus
+
+    # Gender diversity bonus (7%)
+    # MFE programs skew heavily male; female applicants may benefit
+    weight_gender = 0.07
+    max_score += weight_gender
+    if record.gender == "F":
+        score += weight_gender * 1.0
+    elif record.gender == "M":
+        score += weight_gender * 0.4  # baseline, no penalty
+
+    # Nationality / domestic advantage (8%)
+    # Domestic applicants (US citizens/PR) have slight advantage
+    weight_nat = 0.08
+    max_score += weight_nat
+    nat = record.nationality_canonical
+    if nat == "domestic":
+        score += weight_nat * 1.0
+    elif nat == "hk_tw":
+        score += weight_nat * 0.6
+    elif nat == "china":
+        score += weight_nat * 0.4  # largest applicant pool, most competitive
+    else:
+        score += weight_nat * 0.5
 
     # Classify based on score ratio
     ratio = score / max_score if max_score > 0 else 0.0

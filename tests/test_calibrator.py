@@ -26,28 +26,33 @@ def _make_baruch_records() -> list[AdmissionRecord]:
     return [
         # Strong accepted applicants
         AdmissionRecord(
-            id="1", program="baruch-mfe", result="accepted",
+            id="1", gender="M", nationality_canonical="china",
+            program="baruch-mfe", result="accepted",
             gpa_normalized=3.9, bg_tier=1, intern_score=8.0,
             gre=335, has_paper=True, has_research=True,
         ),
         AdmissionRecord(
-            id="2", program="baruch-mfe", result="accepted",
+            id="2", gender="F", nationality_canonical="domestic",
+            program="baruch-mfe", result="accepted",
             gpa_normalized=3.8, bg_tier=2, intern_score=7.0,
             gre=332, has_paper=True, has_research=True,
         ),
         AdmissionRecord(
-            id="3", program="baruch-mfe", result="accepted",
+            id="3", gender="M", nationality_canonical="china",
+            program="baruch-mfe", result="accepted",
             gpa_normalized=3.85, bg_tier=2, intern_score=6.5,
             gre=330, has_paper=False, has_research=True,
         ),
         # Rejected applicants
         AdmissionRecord(
-            id="4", program="baruch-mfe", result="rejected",
+            id="4", gender="M", nationality_canonical="china",
+            program="baruch-mfe", result="rejected",
             gpa_normalized=3.5, bg_tier=4, intern_score=2.0,
             gre=325, has_paper=False, has_research=False,
         ),
         AdmissionRecord(
-            id="5", program="baruch-mfe", result="rejected",
+            id="5", gender="M", nationality_canonical="china",
+            program="baruch-mfe", result="rejected",
             gpa_normalized=3.6, bg_tier=3, intern_score=3.0,
             gre=328, has_paper=False, has_research=False,
         ),
@@ -59,22 +64,26 @@ def _make_mixed_records() -> list[AdmissionRecord]:
     records = _make_baruch_records()
     records.extend([
         AdmissionRecord(
-            id="6", program="cmu-mscf", result="accepted",
+            id="6", gender="F", nationality_canonical="domestic",
+            program="cmu-mscf", result="accepted",
             gpa_normalized=3.85, bg_tier=2, intern_score=7.0,
             gre=333, has_paper=True, has_research=True,
         ),
         AdmissionRecord(
-            id="7", program="cmu-mscf", result="rejected",
+            id="7", gender="M", nationality_canonical="china",
+            program="cmu-mscf", result="rejected",
             gpa_normalized=3.4, bg_tier=4, intern_score=1.0,
             gre=320, has_paper=False, has_research=False,
         ),
         AdmissionRecord(
-            id="8", program="gatech-qcf", result="accepted",
+            id="8", gender="M", nationality_canonical="china",
+            program="gatech-qcf", result="accepted",
             gpa_normalized=3.5, bg_tier=3, intern_score=4.0,
             gre=325, has_paper=False, has_research=False,
         ),
         AdmissionRecord(
-            id="9", program="gatech-qcf", result="accepted",
+            id="9", gender="F", nationality_canonical="hk_tw",
+            program="gatech-qcf", result="accepted",
             gpa_normalized=3.6, bg_tier=2, intern_score=5.0,
             gre=328, has_paper=False, has_research=True,
         ),
@@ -174,6 +183,7 @@ class TestPredictOutcome:
             observed_acceptance_rate=0.60,
         )
         record = AdmissionRecord(
+            gender="F", nationality_canonical="domestic",
             gpa_normalized=3.9, bg_tier=1, intern_score=8.0,
             has_paper=True, has_research=True,
         )
@@ -188,11 +198,39 @@ class TestPredictOutcome:
             observed_acceptance_rate=0.10,
         )
         record = AdmissionRecord(
+            gender="M", nationality_canonical="china",
             gpa_normalized=3.2, bg_tier=5, intern_score=0.0,
             has_paper=False, has_research=False,
         )
         result = predict_outcome(record, threshold)
         assert result == "rejected"
+
+    def test_gender_nationality_influence(self):
+        """Female domestic applicant should score higher than male intl."""
+        threshold = ProgramThreshold(
+            program_id="test",
+            gpa_target=3.7,
+            max_bg_tier_accepted=3,
+            observed_acceptance_rate=0.50,
+        )
+        # Same stats, different gender + nationality
+        base = dict(
+            gpa_normalized=3.7, bg_tier=2, intern_score=5.0,
+            has_paper=False, has_research=False,
+        )
+        female_domestic = AdmissionRecord(
+            gender="F", nationality_canonical="domestic", **base,
+        )
+        male_china = AdmissionRecord(
+            gender="M", nationality_canonical="china", **base,
+        )
+        # female_domestic should not score lower than male_china
+        r1 = predict_outcome(female_domestic, threshold)
+        r2 = predict_outcome(male_china, threshold)
+        # Both may be accepted, but female_domestic should not be rejected
+        # if male_china is accepted
+        if r2 == "accepted":
+            assert r1 == "accepted"
 
 
 # ===================================================================

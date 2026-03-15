@@ -6,8 +6,9 @@ calibration and statistical analysis.
 
 CSV schema
 ----------
-id, bg_type, gpa, gpa_scale, gre, toefl, major, intern_desc,
-has_paper, has_research, courses_note, program, result, season, source
+id, gender, bg_type, nationality, gpa, gpa_scale, gre, toefl, major,
+intern_desc, has_paper, has_research, courses_note, program, result,
+season, source
 """
 
 from __future__ import annotations
@@ -166,6 +167,60 @@ def classify_background(bg_type: str) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Nationality classification
+# ---------------------------------------------------------------------------
+
+# Canonical nationality values
+NATIONALITY_DOMESTIC = "domestic"  # US citizen / permanent resident
+NATIONALITY_CHINA = "china"  # Chinese mainland
+NATIONALITY_HK_TW = "hk_tw"  # Hong Kong, Macau, Taiwan
+NATIONALITY_OTHER_INTL = "other_intl"  # Other international
+
+_NATIONALITY_MAP: dict[str, str] = {
+    "美籍": NATIONALITY_DOMESTIC,
+    "美国": NATIONALITY_DOMESTIC,
+    "us": NATIONALITY_DOMESTIC,
+    "domestic": NATIONALITY_DOMESTIC,
+    "greencard": NATIONALITY_DOMESTIC,
+    "绿卡": NATIONALITY_DOMESTIC,
+    "pr": NATIONALITY_DOMESTIC,
+    "中国大陆": NATIONALITY_CHINA,
+    "中国": NATIONALITY_CHINA,
+    "大陆": NATIONALITY_CHINA,
+    "china": NATIONALITY_CHINA,
+    "mainland": NATIONALITY_CHINA,
+    "港澳台": NATIONALITY_HK_TW,
+    "香港": NATIONALITY_HK_TW,
+    "台湾": NATIONALITY_HK_TW,
+    "澳门": NATIONALITY_HK_TW,
+    "hk": NATIONALITY_HK_TW,
+    "taiwan": NATIONALITY_HK_TW,
+}
+
+
+def classify_nationality(nationality: str) -> str:
+    """Map a nationality string to a canonical value.
+
+    Returns one of: 'domestic', 'china', 'hk_tw', 'other_intl'.
+    Empty/unknown values return 'china' (most common in MFE applicant pool).
+    """
+    val = nationality.strip().lower().replace(" ", "")
+    if not val or val in ("不明", "n/a", "unknown"):
+        return NATIONALITY_CHINA  # default for MFE applicant pool
+
+    # Exact match
+    if val in _NATIONALITY_MAP:
+        return _NATIONALITY_MAP[val]
+
+    # Partial match
+    for key, canonical in _NATIONALITY_MAP.items():
+        if key in val or val in key:
+            return canonical
+
+    return NATIONALITY_OTHER_INTL
+
+
+# ---------------------------------------------------------------------------
 # Intern strength scoring
 # ---------------------------------------------------------------------------
 
@@ -230,8 +285,11 @@ class AdmissionRecord:
     """A single real applicant data point with normalized fields."""
 
     id: str = ""
+    gender: str = ""  # M / F / empty
     bg_type: str = ""
     bg_tier: int = 4  # 1-5, computed from bg_type
+    nationality: str = ""  # raw value
+    nationality_canonical: str = ""  # domestic / china / hk_tw / other_intl
     gpa_raw: float = 0.0
     gpa_scale: float = 4.0
     gpa_normalized: float = 0.0  # on 4.0 scale
@@ -266,6 +324,8 @@ class ProgramStats:
     avg_intern_score_accepted: float = 0.0
     paper_rate_accepted: float = 0.0
     research_rate_accepted: float = 0.0
+    female_rate_accepted: float = 0.0  # fraction of female among accepted
+    nationality_dist_accepted: dict[str, int] = field(default_factory=dict)
 
     # Rejected applicant stats
     avg_gpa_rejected: float = 0.0
@@ -348,11 +408,15 @@ def load_admission_csv(path: str | Path) -> list[AdmissionRecord]:
                 gpa_scale = 4.0
 
             bg_type = row.get("bg_type", "").strip()
+            nationality_raw = row.get("nationality", "").strip()
 
             rec = AdmissionRecord(
                 id=row.get("id", "").strip(),
+                gender=row.get("gender", "").strip().upper(),
                 bg_type=bg_type,
                 bg_tier=classify_background(bg_type),
+                nationality=nationality_raw,
+                nationality_canonical=classify_nationality(nationality_raw),
                 gpa_raw=gpa_raw,
                 gpa_scale=gpa_scale,
                 gpa_normalized=normalize_gpa(gpa_raw, gpa_scale),
@@ -454,6 +518,19 @@ def compute_program_stats(
             if research_known
             else 0.0
         )
+        # Gender stats
+        gendered = [r for r in accepted if r.gender in ("M", "F")]
+        stats.female_rate_accepted = (
+            sum(1 for r in gendered if r.gender == "F") / len(gendered)
+            if gendered
+            else 0.0
+        )
+        # Nationality distribution
+        nat_dist: dict[str, int] = {}
+        for r in accepted:
+            nat = r.nationality_canonical or "unknown"
+            nat_dist[nat] = nat_dist.get(nat, 0) + 1
+        stats.nationality_dist_accepted = nat_dist
 
     # Rejected stats
     if rejected:
@@ -530,6 +607,22 @@ def _compute_feature_importance(
         [1.0 if r.has_research else 0.0 for r in rejected if r.has_research is not None],
     )
 
+    # Gender (female = 1, male = 0)
+    acc_gender = [1.0 if r.gender == "F" else 0.0 for r in accepted if r.gender in ("M", "F")]
+    rej_gender = [1.0 if r.gender == "F" else 0.0 for r in rejected if r.gender in ("M", "F")]
+    features["gender_f"] = _effect_size(acc_gender, rej_gender)
+
+    # Nationality (domestic = 1, international = 0)
+    acc_nat = [
+        1.0 if r.nationality_canonical == "domestic" else 0.0
+        for r in accepted if r.nationality_canonical
+    ]
+    rej_nat = [
+        1.0 if r.nationality_canonical == "domestic" else 0.0
+        for r in rejected if r.nationality_canonical
+    ]
+    features["domestic"] = _effect_size(acc_nat, rej_nat)
+
     return features
 
 
@@ -564,6 +657,18 @@ def summarize_records(records: list[AdmissionRecord]) -> dict[str, Any]:
     seasons = sorted({r.season for r in records if r.season})
     sources = sorted({r.source for r in records if r.source})
 
+    # Gender breakdown
+    gendered = [r for r in records if r.gender in ("M", "F")]
+    gender_dist = {"M": 0, "F": 0}
+    for r in gendered:
+        gender_dist[r.gender] += 1
+
+    # Nationality breakdown
+    nat_dist: dict[str, int] = {}
+    for r in records:
+        nat = r.nationality_canonical or "unknown"
+        nat_dist[nat] = nat_dist.get(nat, 0) + 1
+
     return {
         "total_records": len(records),
         "unique_applicants": len({r.id for r in records}),
@@ -572,4 +677,6 @@ def summarize_records(records: list[AdmissionRecord]) -> dict[str, Any]:
         "sources": sources,
         "avg_gpa_normalized": _safe_avg([r.gpa_normalized for r in records]),
         "gre_available": sum(1 for r in records if r.gre is not None),
+        "gender_dist": gender_dist,
+        "nationality_dist": nat_dist,
     }
