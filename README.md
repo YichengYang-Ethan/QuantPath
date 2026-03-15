@@ -218,33 +218,64 @@ projects:
 
 ### Course Categories
 
-| Category | Examples |
-|----------|---------|
-| `calculus` | Calc I-III, Multivariable Calculus |
-| `linear_algebra` | Linear Algebra, Matrix Theory |
-| `probability` | Probability Theory, Calc-based Probability |
-| `statistics` | Mathematical Statistics, Inference |
-| `ode` | Ordinary Differential Equations |
-| `pde` | Partial Differential Equations |
-| `real_analysis` | Real Analysis, Real Variables |
-| `numerical_analysis` | Numerical Methods, Numerical Analysis |
-| `stochastic_processes` | Stochastic Processes, Random Processes |
-| `econometrics` | Econometrics, Economic Statistics |
-| `time_series` | Time Series Analysis |
-| `stat_computing` | Statistical Computing, Computational Stats |
-| `stat_learning` | Statistical Learning, ML/Stats |
-| `programming_cpp` | C/C++ Programming |
-| `programming_python` | Python Programming |
-| `data_structures` | Data Structures |
-| `algorithms` | Algorithms |
-| `machine_learning` | Machine Learning, Deep Learning |
-| `database` | Database Systems |
-| `finance` | Corporate Finance, Investments |
-| `microeconomics` | Micro, Intermediate Micro |
-| `macroeconomics` | Macro, Intermediate Macro |
-| `game_theory` | Game Theory |
-| `risk_management` | Risk Management, Economics of Risk |
-| `financial_econometrics` | Financial Econometrics |
+Categories are organized by discipline and aligned with MFE program prerequisites.
+
+#### Mathematics (Dimension Weight: 30%)
+
+The most critical dimension. Top programs (Baruch, Princeton, CMU) require strong math preparation.
+
+| Category | Examples | Importance |
+|----------|---------|------------|
+| `calculus` | Calculus I-III, Multivariable Calculus | **Required** by all programs |
+| `linear_algebra` | Linear Algebra, Matrix Theory, Eigenvalues | **Required** by all programs |
+| `probability` | Probability Theory, Calc-based Probability | **Required** by all programs |
+| `ode` | Ordinary Differential Equations | **Required** by most programs |
+| `pde` | Partial Differential Equations | Required by Berkeley, Stanford; recommended by top-5 |
+| `real_analysis` | Real Analysis, Real Variables, Measure Theory | Required by Princeton, NYU Courant; strongly recommended |
+| `numerical_analysis` | Numerical Methods, Numerical Analysis | Required by Berkeley; recommended |
+| `stochastic_processes` | Stochastic Processes, Markov Chains | Strongly recommended for top programs |
+| `stochastic_calculus` | Stochastic Calculus, Itô Calculus, SDEs | Top differentiator for competitive applicants |
+| `optimization` | Convex Optimization, Linear/Nonlinear Programming | Valued by Cornell ORIE, GaTech, CMU |
+
+#### Statistics & Data Science (Dimension Weight: 20%)
+
+| Category | Examples | Importance |
+|----------|---------|------------|
+| `statistics` | Mathematical Statistics, Statistical Inference | **Required** by all programs |
+| `regression` | Regression Analysis, Applied Statistics | Strongly recommended |
+| `econometrics` | Econometrics, Causal Inference | Recommended; especially for applied programs |
+| `time_series` | Time Series Analysis, ARIMA, GARCH | Strongly recommended for financial modeling |
+| `stat_computing` | Statistical Computing (R/Python), Simulation | Recommended |
+| `stat_learning` | Statistical Learning, ML from Stats perspective | Recommended |
+| `bayesian` | Bayesian Statistics, Bayesian Inference | Nice to have for research-oriented programs |
+
+#### Computer Science (Dimension Weight: 20%)
+
+| Category | Examples | Importance |
+|----------|---------|------------|
+| `programming_cpp` | C/C++ Programming | **Essential** for Baruch, CMU, Berkeley |
+| `programming_python` | Python Programming, NumPy/pandas | **Required** proficiency by all programs |
+| `programming_r` | R Programming | Useful for stats-heavy programs |
+| `data_structures` | Data Structures | Strongly recommended |
+| `algorithms` | Algorithms, Algorithm Design | Strongly recommended |
+| `machine_learning` | Machine Learning, Deep Learning | Recommended; increasingly valued |
+| `database` | Database Systems, SQL | Nice to have |
+| `software_engineering` | Software Engineering, OOP, Design Patterns | Valued by industry-focused programs |
+
+#### Finance & Economics (Dimension Weight: 15%)
+
+| Category | Examples | Importance |
+|----------|---------|------------|
+| `finance` | Corporate Finance, Investments, CAPM | Recommended |
+| `derivatives` | Derivatives, Options Pricing, Black-Scholes | Strongly recommended |
+| `fixed_income` | Fixed Income Securities, Bond Pricing | Nice to have |
+| `portfolio_theory` | Portfolio Theory, Asset Pricing, Factor Models | Recommended |
+| `microeconomics` | Intermediate Microeconomics | Recommended |
+| `macroeconomics` | Intermediate Macroeconomics | Recommended |
+| `game_theory` | Game Theory | Lower priority |
+| `risk_management` | Risk Management, VaR, Credit Risk | Recommended |
+| `financial_econometrics` | Financial Econometrics | Recommended |
+| `accounting` | Financial Accounting | Nice to have |
 
 ## Programs Covered
 

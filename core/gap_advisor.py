@@ -35,59 +35,120 @@ class GapRecommendation:
 # the advisor falls back to a generic message.
 
 _FACTOR_ACTIONS: dict[str, str] = {
-    # Math dimension
+    # ── Math dimension ───────────────────────────────────────────────
     "calculus_series": (
-        "Take Calculus III or equivalent"
-        " (multivariable calculus is required by nearly all programs)"
+        "Complete Calculus I-III including multivariable calculus"
+        " (required by all programs)"
     ),
     "linear_algebra": (
         "Take a proof-based Linear Algebra course"
-        " (upper-division or graduate level)"
+        " (upper-division; eigenvalues, vector spaces, linear transformations)"
     ),
-    "probability": "Take a calculus-based Probability Theory course",
-    "ode_pde": "Take Differential Equations (ODE); PDE is a plus for top-5",
+    "probability": (
+        "Take calculus-based Probability Theory"
+        " (distributions, CLT, conditional expectation)"
+    ),
+    "ode_pde": (
+        "Take ODE (required); PDE is a differentiator for top-5"
+        " (boundary value problems, Fourier methods)"
+    ),
     "real_analysis": (
         "Take Real Analysis / Real Variables"
-        " (strongly recommended for CMU, Baruch, Princeton)"
+        " (required by Princeton, NYU Courant; strongly recommended by CMU, Baruch)"
     ),
-    "numerical_analysis": "Take Numerical Analysis or Numerical Methods",
+    "numerical_analysis": (
+        "Take Numerical Analysis / Numerical Methods"
+        " (required by Berkeley; interpolation, quadrature, solving DEs)"
+    ),
     "stochastic_processes": (
-        "Take Stochastic Calculus or Stochastic Processes"
-        " (recommended for top-5 programs)"
+        "Take Stochastic Processes"
+        " (Markov chains, Poisson processes, random walks)"
     ),
-    # Statistics dimension
-    "math_stats": "Take Mathematical Statistics at the 400+ level",
-    "time_series": "Take a Time Series Analysis course",
-    "econometrics": "Take an Econometrics course",
-    "stat_learning_ml": "Take Statistical Learning or Machine Learning",
-    "stat_computing": "Take Statistical Computing (R or Python-based)",
+    "stochastic_calculus": (
+        "Take Stochastic Calculus / Itô Calculus"
+        " (Brownian motion, SDEs — top differentiator for competitive applicants)"
+    ),
+    "optimization": (
+        "Take Optimization (linear/convex/nonlinear programming)"
+        " (valuable for Cornell ORIE, GaTech, portfolio optimization)"
+    ),
+    # ── Statistics dimension ─────────────────────────────────────────
+    "math_stats": (
+        "Take Mathematical Statistics at the 400+ level"
+        " (MLE, hypothesis testing, sufficient statistics)"
+    ),
+    "regression": (
+        "Take Regression Analysis / Applied Statistics"
+        " (linear models, ANOVA, diagnostics)"
+    ),
+    "time_series": (
+        "Take Time Series Analysis"
+        " (ARIMA, GARCH — essential for financial data modeling)"
+    ),
+    "econometrics": "Take Econometrics (IV, panel data, causal inference)",
+    "stat_learning_ml": (
+        "Take Statistical Learning or Machine Learning"
+        " (regularization, cross-validation, tree methods)"
+    ),
+    "stat_computing": (
+        "Take Statistical Computing in R or Python"
+        " (simulation, bootstrapping, computational methods)"
+    ),
     "courses_400_level_count": (
-        "Enroll in more upper-division statistics courses"
-        " to strengthen your transcript"
+        "Enroll in more upper-division (400+) statistics courses"
+        " to demonstrate depth on your transcript"
     ),
-    # CS dimension
+    # ── CS dimension ─────────────────────────────────────────────────
     "cpp_proficiency": (
         "Take a C++ programming course"
-        " (essential for Baruch, CMU, and most top programs)"
+        " (essential for Baruch, CMU, Berkeley; tested in interviews)"
     ),
     "python_proficiency": (
-        "Take a Python course or build substantial Python projects"
+        "Take Python programming or build substantial Python projects"
+        " (NumPy, pandas, data analysis pipelines)"
     ),
-    "data_structures_algo": "Take Data Structures and Algorithms",
-    "ml_course": "Take a Machine Learning course",
+    "data_structures_algo": (
+        "Take Data Structures and Algorithms"
+        " (complexity analysis, trees, graphs, dynamic programming)"
+    ),
+    "ml_course": (
+        "Take a Machine Learning course"
+        " (neural networks, ensemble methods — increasingly valued)"
+    ),
     "numerical_computing": "Take Numerical or Scientific Computing",
-    "is_cs_major": (
-        "Consider a CS minor or additional CS electives"
+    "software_engineering": (
+        "Take Software Engineering or OOP"
+        " (design patterns, version control, testing — valued by industry)"
     ),
-    # Finance/Econ dimension
-    "micro_macro": "Take Intermediate Micro and Macro Economics",
-    "investments_finance": "Take an Investments or Corporate Finance course",
-    "derivatives": "Take Derivatives/Options Pricing or Financial Risk Mgmt",
-    "risk_management": "Take a Risk Management or Financial Risk course",
+    "is_cs_major": "Consider a CS minor or additional CS electives",
+    # ── Finance/Econ dimension ───────────────────────────────────────
+    "micro_macro": (
+        "Take Intermediate Micro and Macro Economics"
+        " (utility theory, equilibrium, monetary policy)"
+    ),
+    "investments_finance": (
+        "Take Investments or Corporate Finance"
+        " (CAPM, efficient markets, valuation)"
+    ),
+    "derivatives": (
+        "Take a Derivatives / Options Pricing course"
+        " (Black-Scholes, binomial models, Greeks)"
+    ),
+    "portfolio_theory": (
+        "Take Portfolio Theory / Asset Pricing"
+        " (mean-variance optimization, factor models)"
+    ),
+    "risk_management": (
+        "Take Risk Management (VaR, stress testing, credit risk)"
+    ),
     "financial_econometrics": "Take Financial Econometrics",
-    "game_theory": "Take Game Theory (lower priority for most MFE programs)",
-    # GPA dimension
-    "cumulative_gpa": "Focus on raising GPA by excelling in remaining courses",
+    "game_theory": (
+        "Take Game Theory (lower priority for most MFE programs)"
+    ),
+    # ── GPA dimension ────────────────────────────────────────────────
+    "cumulative_gpa": (
+        "Focus on raising GPA by excelling in remaining courses"
+    ),
     "quant_gpa": (
         "Prioritize high grades in quant courses"
         " (math, stats, CS) to boost quant GPA"

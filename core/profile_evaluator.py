@@ -139,23 +139,35 @@ def _score_math(profile: UserProfile) -> tuple[float, list[dict[str, Any]]]:
     """Math dimension (weight 0.30).
 
     Factors & weights:
-        calculus_series        0.20
-        linear_algebra         0.20
-        probability            0.15
-        ode_pde                0.10
-        real_analysis          0.15
-        numerical_analysis     0.10
-        stochastic_processes   0.10
+        calculus_series        0.15   (Calc I-III, required by all programs)
+        linear_algebra         0.15   (required by all programs)
+        probability            0.15   (calc-based, required by all programs)
+        ode_pde                0.10   (ODE required, PDE is a plus for top-5)
+        real_analysis          0.12   (strongly recommended by top programs)
+        numerical_analysis     0.08   (required by Berkeley, helpful elsewhere)
+        stochastic_processes   0.08   (random processes, Markov chains)
+        stochastic_calculus    0.10   (Itô calculus — top differentiator)
+        optimization           0.07   (convex/linear programming)
     """
     cw = profile.coursework
     factors = [
-        ("calculus_series", 0.20, _best_score_for_category(cw, "calculus")),
-        ("linear_algebra", 0.20, _best_score_for_category(cw, "linear_algebra")),
+        ("calculus_series", 0.15, _best_score_for_category(cw, "calculus")),
+        ("linear_algebra", 0.15, _best_score_for_category(cw, "linear_algebra")),
         ("probability", 0.15, _best_score_for_category(cw, "probability")),
         ("ode_pde", 0.10, _best_score_for_categories(cw, {"ode", "pde"})),
-        ("real_analysis", 0.15, _best_score_for_category(cw, "real_analysis")),
-        ("numerical_analysis", 0.10, _best_score_for_category(cw, "numerical_analysis")),
-        ("stochastic_processes", 0.10, _best_score_for_category(cw, "stochastic_processes")),
+        ("real_analysis", 0.12, _best_score_for_category(cw, "real_analysis")),
+        ("numerical_analysis", 0.08, _best_score_for_category(cw, "numerical_analysis")),
+        (
+            "stochastic_processes",
+            0.08,
+            _best_score_for_category(cw, "stochastic_processes"),
+        ),
+        (
+            "stochastic_calculus",
+            0.10,
+            _best_score_for_category(cw, "stochastic_calculus"),
+        ),
+        ("optimization", 0.07, _best_score_for_category(cw, "optimization")),
     ]
     return _weighted_result(factors)
 
@@ -164,12 +176,13 @@ def _score_statistics(profile: UserProfile) -> tuple[float, list[dict[str, Any]]
     """Statistics dimension (weight 0.20).
 
     Factors & weights:
-        math_stats                  0.25
-        time_series                 0.20
-        econometrics                0.15
-        stat_learning_ml            0.15
-        stat_computing              0.10
-        courses_400_level_count     0.15
+        math_stats                  0.22   (Mathematical Statistics / Inference)
+        regression                  0.13   (Regression / Applied Stats)
+        time_series                 0.18   (Time Series Analysis)
+        econometrics                0.12   (Econometrics)
+        stat_learning_ml            0.13   (Statistical Learning / ML)
+        stat_computing              0.10   (Statistical Computing in R/Python)
+        courses_400_level_count     0.12   (depth indicator)
     """
     cw = profile.coursework
 
@@ -177,25 +190,32 @@ def _score_statistics(profile: UserProfile) -> tuple[float, list[dict[str, Any]]
     # 1 -> 5, 2 -> 7, 3+ -> 10.
     stat_categories = {
         "statistics",
+        "regression",
         "econometrics",
         "time_series",
         "stat_learning",
         "stat_computing",
+        "bayesian",
     }
     n400 = _count_courses(cw, stat_categories, min_level=400)
     count_score = min(10.0, {0: 0.0, 1: 5.0, 2: 7.0}.get(n400, 10.0))
 
     factors = [
-        ("math_stats", 0.25, _best_score_for_category(cw, "statistics")),
-        ("time_series", 0.20, _best_score_for_category(cw, "time_series")),
-        ("econometrics", 0.15, _best_score_for_category(cw, "econometrics")),
+        ("math_stats", 0.22, _best_score_for_category(cw, "statistics")),
+        (
+            "regression",
+            0.13,
+            _best_score_for_categories(cw, {"regression", "statistics"}),
+        ),
+        ("time_series", 0.18, _best_score_for_category(cw, "time_series")),
+        ("econometrics", 0.12, _best_score_for_category(cw, "econometrics")),
         (
             "stat_learning_ml",
-            0.15,
+            0.13,
             _best_score_for_categories(cw, {"stat_learning", "machine_learning"}),
         ),
         ("stat_computing", 0.10, _best_score_for_category(cw, "stat_computing")),
-        ("courses_400_level_count", 0.15, count_score),
+        ("courses_400_level_count", 0.12, count_score),
     ]
     return _weighted_result(factors)
 
@@ -204,11 +224,12 @@ def _score_cs(profile: UserProfile) -> tuple[float, list[dict[str, Any]]]:
     """CS dimension (weight 0.20).
 
     Factors & weights:
-        cpp_proficiency       0.30
-        python_proficiency    0.20
-        data_structures_algo  0.20
-        ml_course             0.10
-        numerical_computing   0.10
+        cpp_proficiency       0.25   (essential for Baruch, CMU, Berkeley)
+        python_proficiency    0.20   (standard tool across all programs)
+        data_structures_algo  0.18   (core CS fundamentals)
+        ml_course             0.10   (ML/DL increasingly valued)
+        numerical_computing   0.07   (numerical methods implementation)
+        software_engineering  0.10   (OOP, design — valued by industry)
         is_cs_major           0.10   (bonus: 10 if CS major, else 0)
     """
     cw = profile.coursework
@@ -216,15 +237,24 @@ def _score_cs(profile: UserProfile) -> tuple[float, list[dict[str, Any]]]:
     cs_major_score = 10.0 if _has_major(profile, {"computer science", "computing"}) else 0.0
 
     factors = [
-        ("cpp_proficiency", 0.30, _best_score_for_category(cw, "programming_cpp")),
-        ("python_proficiency", 0.20, _best_score_for_category(cw, "programming_python")),
+        ("cpp_proficiency", 0.25, _best_score_for_category(cw, "programming_cpp")),
+        (
+            "python_proficiency",
+            0.20,
+            _best_score_for_categories(cw, {"programming_python", "programming_r"}),
+        ),
         (
             "data_structures_algo",
-            0.20,
+            0.18,
             _best_score_for_categories(cw, {"data_structures", "algorithms"}),
         ),
         ("ml_course", 0.10, _best_score_for_category(cw, "machine_learning")),
-        ("numerical_computing", 0.10, _best_score_for_category(cw, "numerical_analysis")),
+        ("numerical_computing", 0.07, _best_score_for_category(cw, "numerical_analysis")),
+        (
+            "software_engineering",
+            0.10,
+            _best_score_for_categories(cw, {"software_engineering", "database"}),
+        ),
         ("is_cs_major", 0.10, cs_major_score),
     ]
     return _weighted_result(factors)
@@ -234,20 +264,38 @@ def _score_finance_econ(profile: UserProfile) -> tuple[float, list[dict[str, Any
     """Finance / Economics dimension (weight 0.15).
 
     Factors & weights:
-        micro_macro              0.20
-        investments_finance      0.25
-        derivatives              0.15
-        risk_management          0.15
-        financial_econometrics   0.15
-        game_theory              0.10
+        micro_macro              0.18   (Intermediate Micro/Macro)
+        investments_finance      0.20   (Corporate Finance, Investments)
+        derivatives              0.18   (Derivatives, Options Pricing)
+        portfolio_theory         0.10   (Portfolio Theory, Asset Pricing)
+        risk_management          0.12   (Financial Risk Management)
+        financial_econometrics   0.12   (Financial Econometrics)
+        game_theory              0.10   (Game Theory — lower priority)
     """
     cw = profile.coursework
     factors = [
-        ("micro_macro", 0.20, _best_score_for_categories(cw, {"microeconomics", "macroeconomics"})),
-        ("investments_finance", 0.25, _best_score_for_category(cw, "finance")),
-        ("derivatives", 0.15, _best_score_for_categories(cw, {"finance", "risk_management"})),
-        ("risk_management", 0.15, _best_score_for_category(cw, "risk_management")),
-        ("financial_econometrics", 0.15, _best_score_for_category(cw, "financial_econometrics")),
+        (
+            "micro_macro",
+            0.18,
+            _best_score_for_categories(cw, {"microeconomics", "macroeconomics"}),
+        ),
+        ("investments_finance", 0.20, _best_score_for_category(cw, "finance")),
+        (
+            "derivatives",
+            0.18,
+            _best_score_for_categories(cw, {"derivatives", "finance"}),
+        ),
+        (
+            "portfolio_theory",
+            0.10,
+            _best_score_for_categories(cw, {"portfolio_theory", "finance"}),
+        ),
+        ("risk_management", 0.12, _best_score_for_category(cw, "risk_management")),
+        (
+            "financial_econometrics",
+            0.12,
+            _best_score_for_category(cw, "financial_econometrics"),
+        ),
         ("game_theory", 0.10, _best_score_for_category(cw, "game_theory")),
     ]
     return _weighted_result(factors)

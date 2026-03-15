@@ -16,40 +16,53 @@ from typing import Any, Optional
 
 
 class CourseCategory(str, Enum):
-    """Canonical taxonomy of course categories recognised by the scorer."""
+    """Canonical taxonomy of course categories recognised by the scorer.
 
-    # Mathematics
-    CALCULUS = "calculus"
-    LINEAR_ALGEBRA = "linear_algebra"
-    PROBABILITY = "probability"
-    STATISTICS = "statistics"
-    ODE = "ode"
-    PDE = "pde"
-    REAL_ANALYSIS = "real_analysis"
-    NUMERICAL_ANALYSIS = "numerical_analysis"
-    STOCHASTIC_PROCESSES = "stochastic_processes"
+    Organised by discipline, aligned with MFE program prerequisites.
+    """
 
-    # Statistics / Data Science
-    ECONOMETRICS = "econometrics"
-    TIME_SERIES = "time_series"
-    STAT_COMPUTING = "stat_computing"
-    STAT_LEARNING = "stat_learning"
+    # ── Mathematics ──────────────────────────────────────────────────
+    CALCULUS = "calculus"  # Calc I-III, Multivariable Calculus
+    LINEAR_ALGEBRA = "linear_algebra"  # Linear Algebra, Matrix Theory
+    PROBABILITY = "probability"  # Probability Theory, Calc-based Prob
+    ODE = "ode"  # Ordinary Differential Equations
+    PDE = "pde"  # Partial Differential Equations
+    REAL_ANALYSIS = "real_analysis"  # Real Analysis, Measure Theory
+    NUMERICAL_ANALYSIS = "numerical_analysis"  # Numerical Methods
+    STOCHASTIC_PROCESSES = "stochastic_processes"  # Stochastic Processes
+    STOCHASTIC_CALCULUS = "stochastic_calculus"  # Itô Calculus, SDEs
+    OPTIMIZATION = "optimization"  # Convex/Linear/Nonlinear Optimization
 
-    # Computer Science
-    PROGRAMMING_CPP = "programming_cpp"
-    PROGRAMMING_PYTHON = "programming_python"
-    DATA_STRUCTURES = "data_structures"
-    ALGORITHMS = "algorithms"
-    MACHINE_LEARNING = "machine_learning"
-    DATABASE = "database"
+    # ── Statistics & Data Science ────────────────────────────────────
+    STATISTICS = "statistics"  # Mathematical Statistics, Inference
+    REGRESSION = "regression"  # Regression Analysis, Applied Stats
+    ECONOMETRICS = "econometrics"  # Econometrics
+    TIME_SERIES = "time_series"  # Time Series Analysis
+    STAT_COMPUTING = "stat_computing"  # Statistical Computing (R/Python)
+    STAT_LEARNING = "stat_learning"  # Statistical Learning, ML/Stats
+    BAYESIAN = "bayesian"  # Bayesian Statistics
 
-    # Finance / Economics
-    FINANCE = "finance"
-    MICROECONOMICS = "microeconomics"
-    MACROECONOMICS = "macroeconomics"
-    GAME_THEORY = "game_theory"
-    RISK_MANAGEMENT = "risk_management"
-    FINANCIAL_ECONOMETRICS = "financial_econometrics"
+    # ── Computer Science ─────────────────────────────────────────────
+    PROGRAMMING_CPP = "programming_cpp"  # C/C++ Programming
+    PROGRAMMING_PYTHON = "programming_python"  # Python Programming
+    PROGRAMMING_R = "programming_r"  # R Programming
+    DATA_STRUCTURES = "data_structures"  # Data Structures
+    ALGORITHMS = "algorithms"  # Algorithms, Algorithm Design
+    MACHINE_LEARNING = "machine_learning"  # Machine Learning, Deep Learning
+    DATABASE = "database"  # Database Systems, SQL
+    SOFTWARE_ENGINEERING = "software_engineering"  # OOP, Design Patterns
+
+    # ── Finance & Economics ──────────────────────────────────────────
+    FINANCE = "finance"  # Corporate Finance, Investments
+    DERIVATIVES = "derivatives"  # Derivatives, Options Pricing
+    FIXED_INCOME = "fixed_income"  # Fixed Income Securities
+    PORTFOLIO_THEORY = "portfolio_theory"  # Portfolio Theory, Asset Pricing
+    MICROECONOMICS = "microeconomics"  # Micro, Intermediate Micro
+    MACROECONOMICS = "macroeconomics"  # Macro, Intermediate Macro
+    GAME_THEORY = "game_theory"  # Game Theory
+    RISK_MANAGEMENT = "risk_management"  # Risk Management
+    FINANCIAL_ECONOMETRICS = "financial_econometrics"  # Financial Econometrics
+    ACCOUNTING = "accounting"  # Financial Accounting
 
     OTHER = "other"
 

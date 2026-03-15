@@ -65,6 +65,12 @@ courses:
     grade: "B+"
     level: 400
 
+  - code: "MATH 470"
+    name: "Optimization"
+    category: optimization
+    grade: "A-"
+    level: 400
+
   # === Statistics ===
   - code: "STAT 310"
     name: "Mathematical Statistics"
@@ -139,6 +145,12 @@ courses:
     category: finance
     grade: "A"
     level: 300
+
+  - code: "FIN 420"
+    name: "Derivatives and Options Pricing"
+    category: derivatives
+    grade: "A-"
+    level: 400
 
   - code: "ECON 410"
     name: "Econometrics"
