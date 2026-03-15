@@ -657,6 +657,17 @@ def cmd_stats(args: argparse.Namespace) -> None:
         table.add_row(prog_id, str(acc), str(rej), str(wl), str(total), rate)
 
     console.print(table)
+
+    # Gender & nationality summary
+    gender = summary.get("gender_dist", {})
+    nat = summary.get("nationality_dist", {})
+    if gender or nat:
+        gender_str = f"M:{gender.get('M', 0)} F:{gender.get('F', 0)}"
+        nat_parts = [f"{k}:{v}" for k, v in sorted(nat.items(), key=lambda x: -x[1])]
+        console.print(
+            f"  [bold]Demographics:[/bold]  Gender: {gender_str}  |  "
+            f"Nationality: {', '.join(nat_parts)}"
+        )
     console.print()
 
     # GPA distribution
