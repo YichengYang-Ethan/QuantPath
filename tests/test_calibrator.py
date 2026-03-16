@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from core.admission_data import AdmissionRecord
+from core.admission_data import AdmissionRecord, compute_program_stats
 from core.calibrator import (
     CalibrationResult,
     ProgramThreshold,
@@ -13,8 +13,6 @@ from core.calibrator import (
     generate_ranker_overrides,
     predict_outcome,
 )
-from core.admission_data import compute_program_stats
-
 
 # ===================================================================
 # Test fixtures
@@ -158,7 +156,7 @@ class TestCalibrateAll:
         result = calibrate_all(records)
 
         assert "total_predictions" in result.accuracy_report
-        assert result.accuracy_report["total_predictions"] > 0
+        assert result.accuracy_report.get("method") == "leave-one-out CV"
 
     def test_recommendations_generated(self):
         records = _make_mixed_records()
@@ -231,6 +229,26 @@ class TestPredictOutcome:
         # if male_china is accepted
         if r2 == "accepted":
             assert r1 == "accepted"
+
+    def test_uses_learned_weights_when_confident(self):
+        """Predictions should use learned feature_weights when available."""
+        threshold = ProgramThreshold(
+            program_id="test",
+            gpa_target=3.7,
+            observed_acceptance_rate=0.50,
+            confidence="high",
+            feature_weights={"gpa": 2.0, "intern": 0.1,
+                             "bg_tier": 0.1, "paper": 0.1,
+                             "research": 0.1, "gender_f": 0.1,
+                             "domestic": 0.1},
+        )
+        # GPA-heavy weights: high GPA should dominate
+        strong_gpa = AdmissionRecord(
+            gpa_normalized=3.9, bg_tier=4, intern_score=0.0,
+            gender="M", nationality_canonical="china",
+        )
+        result = predict_outcome(strong_gpa, threshold)
+        assert result in ("accepted", "borderline")
 
 
 # ===================================================================

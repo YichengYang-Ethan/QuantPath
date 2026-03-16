@@ -93,6 +93,53 @@ class TestGradeToScore:
 
 
 # ===================================================================
+# grade_to_score — international grading systems
+# ===================================================================
+
+class TestGradeToScoreInternational:
+    """Test Indian CGPA and UK degree classification conversions."""
+
+    @pytest.mark.parametrize("grade,expected", [
+        ("9.5",  10.0),   # 9.0+ -> 10.0
+        ("9.0",  10.0),   # boundary: exactly 9.0 -> 10.0
+        ("8.5",  9.0),    # 8.0-8.9 -> 9.0
+        ("7.5",  8.0),    # 7.0-7.9 -> 8.0
+        ("6.5",  7.0),    # 6.0-6.9 -> 7.0
+        ("5.5",  6.0),    # 5.0-5.9 -> 6.0
+        ("4.5",  5.0),    # 4.0-4.9 -> 5.0
+        ("3.5",  4.0),    # < 4.0 -> 4.0
+    ])
+    def test_indian_cgpa(self, grade: str, expected: float) -> None:
+        assert grade_to_score(grade) == expected
+
+    @pytest.mark.parametrize("grade,expected", [
+        ("First",        10.0),
+        ("1st",          10.0),
+        ("2:1",          8.5),
+        ("Upper Second", 8.5),
+        ("2:2",          7.0),
+        ("Lower Second", 7.0),
+        ("Third",        5.0),
+        ("3rd",          5.0),
+    ])
+    def test_uk_classification(self, grade: str, expected: float) -> None:
+        assert grade_to_score(grade) == expected
+
+    def test_indian_cgpa_top_boundary(self) -> None:
+        """10.0 is within the Indian CGPA range (1-10) and should map to 10.0."""
+        assert grade_to_score("10.0") == 10.0
+
+    def test_boundary_above_indian_scale(self) -> None:
+        """11.0 is outside the Indian CGPA range and falls into percentage scale."""
+        # 11.0 is < 60 on the percentage scale -> 4.0
+        assert grade_to_score("11.0") == 4.0
+
+    def test_indian_cgpa_lower_boundary(self) -> None:
+        """1.0 is the lower bound of the Indian CGPA range -> 4.0 (below 4.0 threshold)."""
+        assert grade_to_score("1.0") == 4.0
+
+
+# ===================================================================
 # _gpa_to_score
 # ===================================================================
 

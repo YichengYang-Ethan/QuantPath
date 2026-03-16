@@ -36,6 +36,9 @@ web = [
     "streamlit>=1.30.0",
     "plotly>=5.0.0",
 ]
+pdf = [
+    "fpdf2>=2.7.0",
+]
 
 [project.scripts]
 quantpath = "cli.main:main"

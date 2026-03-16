@@ -33,6 +33,18 @@ _LETTER_TO_SCORE: dict[str, float] = {
     "C": 4.0,
 }
 
+# UK degree classifications mapped to the same 0-10 scale.
+_UK_CLASS_TO_SCORE: dict[str, float] = {
+    "First": 10.0,
+    "1st": 10.0,
+    "2:1": 8.5,
+    "Upper Second": 8.5,
+    "2:2": 7.0,
+    "Lower Second": 7.0,
+    "Third": 5.0,
+    "3rd": 5.0,
+}
+
 
 def grade_to_score(grade: str) -> float:
     """Convert a letter or numeric grade string to a 0-10 score.
@@ -41,10 +53,20 @@ def grade_to_score(grade: str) -> float:
     -------------
     A+/A -> 10, A- -> 9, B+ -> 8, B -> 7, B- -> 6, C+ -> 5, C -> 4.
 
-    Numeric grades
-    --------------
+    UK degree classifications
+    -------------------------
+    First/1st -> 10, 2:1/Upper Second -> 8.5, 2:2/Lower Second -> 7.0,
+    Third/3rd -> 5.0.
+
+    Numeric grades (percentage scale, > 10)
+    ----------------------------------------
     90+ -> 10, 85-89 -> 9, 80-84 -> 8, 76-79 -> 7, 70-75 -> 6,
     60-69 -> 5, <60 -> 4.
+
+    Indian CGPA (1.0-10.0 scale)
+    ----------------------------
+    9.0+ -> 10, 8.0-8.9 -> 9, 7.0-7.9 -> 8, 6.0-6.9 -> 7,
+    5.0-5.9 -> 6, 4.0-4.9 -> 5, <4.0 -> 4.
 
     Returns 0.0 if the grade string is empty or unrecognised.
     """
@@ -60,12 +82,35 @@ def grade_to_score(grade: str) -> float:
     if grade in _LETTER_TO_SCORE:
         return _LETTER_TO_SCORE[grade]
 
+    # Try UK degree classification lookup.
+    if grade in _UK_CLASS_TO_SCORE:
+        return _UK_CLASS_TO_SCORE[grade]
+
     # Try numeric conversion.
     try:
         num = float(grade)
     except ValueError:
         return 0.0
 
+    # Indian CGPA scale (1.0-10.0).  Values in this range are too low to
+    # be percentages but match the 10-point CGPA system used widely in India.
+    if 1.0 <= num <= 10.0:
+        if num >= 9.0:
+            return 10.0
+        elif num >= 8.0:
+            return 9.0
+        elif num >= 7.0:
+            return 8.0
+        elif num >= 6.0:
+            return 7.0
+        elif num >= 5.0:
+            return 6.0
+        elif num >= 4.0:
+            return 5.0
+        else:
+            return 4.0
+
+    # Percentage scale (> 10).
     if num >= 90:
         return 10.0
     elif num >= 85:

@@ -124,6 +124,55 @@ class UserProfile:
     is_international: bool = False
     years_at_us_institution: int = 0
 
+    def to_dict(self) -> dict:
+        """Serialise back to the YAML-compatible dict format.
+
+        The returned dict mirrors the structure expected by
+        ``data_loader.load_profile`` and the example YAML in
+        ``examples/sample_profile.yaml``.
+        """
+        personal: dict[str, Any] = {
+            "name": self.name,
+            "university": self.university,
+            "majors": list(self.majors),
+            "gpa": self.gpa,
+            "is_international": self.is_international,
+            "years_at_us_institution": self.years_at_us_institution,
+        }
+
+        test_scores: dict[str, Any] = {}
+        if self.test_scores.gre_quant is not None:
+            test_scores["gre_quant"] = self.test_scores.gre_quant
+        if self.test_scores.gre_verbal is not None:
+            test_scores["gre_verbal"] = self.test_scores.gre_verbal
+        if self.test_scores.toefl is not None:
+            test_scores["toefl_ibt"] = self.test_scores.toefl
+
+        courses: list[dict[str, Any]] = []
+        for c in self.coursework:
+            course_dict: dict[str, Any] = {
+                "code": c.code,
+                "name": c.name,
+                "category": c.category,
+                "grade": c.grade,
+                "level": c.level,
+                "credits": c.credits,
+            }
+            if c.university:
+                course_dict["university"] = c.university
+            courses.append(course_dict)
+
+        experience: list[dict[str, Any]] = [dict(e) for e in self.work_experience]
+        projects: list[dict[str, Any]] = [dict(p) for p in self.projects]
+
+        result: dict[str, Any] = {"personal": personal}
+        if test_scores:
+            result["test_scores"] = test_scores
+        result["courses"] = courses
+        result["experience"] = experience
+        result["projects"] = projects
+        return result
+
 
 # ---------------------------------------------------------------------------
 # Program data (loaded from YAML)

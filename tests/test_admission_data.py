@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import csv
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -18,8 +17,8 @@ from core.admission_data import (
     normalize_gpa,
     score_internships,
     summarize_records,
+    validate_records,
 )
-
 
 # ===================================================================
 # GPA normalization
@@ -356,3 +355,43 @@ class TestComputeStats:
         assert summary["gender_dist"]["F"] == 1
         assert "nationality_dist" in summary
         assert summary["nationality_dist"]["china"] == 3
+
+
+# ===================================================================
+# Validation
+# ===================================================================
+
+
+class TestValidateRecords:
+    """Tests for validate_records()."""
+
+    def test_consistent_records_no_warnings(self):
+        records = [
+            AdmissionRecord(id="1", gpa_raw=3.8, bg_type="985",
+                            gpa_normalized=3.8, program="cmu"),
+            AdmissionRecord(id="1", gpa_raw=3.8, bg_type="985",
+                            gpa_normalized=3.8, program="baruch"),
+        ]
+        assert validate_records(records) == []
+
+    def test_inconsistent_gpa_warning(self):
+        records = [
+            AdmissionRecord(id="1", gpa_raw=3.8, gpa_normalized=3.8),
+            AdmissionRecord(id="1", gpa_raw=3.5, gpa_normalized=3.5),
+        ]
+        warnings = validate_records(records)
+        assert any("inconsistent GPA" in w for w in warnings)
+
+    def test_gre_out_of_range(self):
+        records = [
+            AdmissionRecord(id="1", gre=350, gpa_normalized=3.8),
+        ]
+        warnings = validate_records(records)
+        assert any("GRE" in w for w in warnings)
+
+    def test_gpa_over_4(self):
+        records = [
+            AdmissionRecord(id="1", gpa_normalized=4.2),
+        ]
+        warnings = validate_records(records)
+        assert any("normalized GPA" in w for w in warnings)

@@ -102,6 +102,129 @@ categories:
           P(other side red | see red) = 2/3.
         programs: ["baruch-mfe", "cmu-mscf", "mit-mfin"]
 
+      - question: "A disease affects 1 in 10,000 people. A test for the disease has a 99% true positive rate and a 1% false positive rate. If a person tests positive, what is the probability they have the disease?"
+        difficulty: medium
+        topics: ["bayes_theorem", "conditional_probability"]
+        hint: "Apply Bayes' theorem. The low base rate matters enormously."
+        solution: |
+          About 0.98%. By Bayes' theorem:
+          P(D|+) = P(+|D)*P(D) / [P(+|D)*P(D) + P(+|~D)*P(~D)]
+          = 0.99 * 0.0001 / (0.99 * 0.0001 + 0.01 * 0.9999)
+          = 0.000099 / (0.000099 + 0.009999) ~ 0.0098 or about 1%.
+          This illustrates the base rate fallacy -- even with a good test, rare diseases
+          yield mostly false positives.
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "In a room of 23 people, what is the probability that at least two share a birthday? Assume 365 days."
+        difficulty: easy
+        topics: ["birthday_problem", "combinatorics"]
+        hint: "Compute the complement: probability that ALL 23 people have distinct birthdays."
+        solution: |
+          About 50.7%. P(at least one match) = 1 - P(all distinct).
+          P(all distinct) = (365/365) * (364/365) * (363/365) * ... * (343/365)
+          = 365! / (365^23 * 342!) ~ 0.4927.
+          So P(match) ~ 1 - 0.4927 = 0.5073.
+          The result is surprisingly high because there are C(23,2) = 253 pairs to compare.
+        programs: ["baruch-mfe", "nyu-tandon-mfe"]
+
+      - question: "You are on a game show with 3 doors. Behind one is a car; behind the others, goats. You pick door 1. The host (who knows what's behind the doors) opens door 3 to reveal a goat. Should you switch to door 2?"
+        difficulty: easy
+        topics: ["monty_hall", "conditional_probability"]
+        hint: "Consider the host's information. How does the host's action update the probabilities?"
+        solution: |
+          Yes, switch. Switching wins with probability 2/3, staying wins with probability 1/3.
+          Initially, P(car behind door 1) = 1/3, P(car behind doors 2 or 3) = 2/3.
+          The host always reveals a goat from the unchosen doors. After the host opens door 3
+          (a goat), the 2/3 probability concentrates entirely on door 2.
+          The key insight: the host's action provides information because the host never opens
+          the door with the car.
+        programs: ["baruch-mfe", "nyu-tandon-mfe", "uchicago-msfm"]
+
+      - question: "A drunk man starts at position 0 on the integer line. Each step he goes +1 or -1 with equal probability. What is the probability he eventually returns to 0?"
+        difficulty: medium
+        topics: ["random_walk", "recurrence"]
+        hint: "This is a classic result about recurrence of random walks. Consider the dimension."
+        solution: |
+          Probability 1 (certain return). The symmetric random walk in 1D is recurrent --
+          it visits every integer (including the origin) infinitely often with probability 1.
+          This follows from the fact that sum of P(S_{2n}=0) diverges: P(S_{2n}=0) = C(2n,n)/2^{2n}
+          ~ 1/sqrt(pi*n) by Stirling, and sum 1/sqrt(n) diverges.
+          Note: in 2D the walk is also recurrent (Polya), but in 3D and higher, it is transient.
+        programs: ["princeton-mfin", "cmu-mscf"]
+
+      - question: "Let X ~ Exponential(lambda). What is E[X | X > t]?"
+        difficulty: medium
+        topics: ["conditional_expectation", "memoryless_property"]
+        hint: "The exponential distribution has the memoryless property."
+        solution: |
+          E[X | X > t] = t + 1/lambda.
+          By the memoryless property, given X > t, the remaining lifetime X - t is still
+          Exponential(lambda). So E[X - t | X > t] = 1/lambda, and E[X | X > t] = t + 1/lambda.
+          This property uniquely characterizes the exponential among continuous distributions
+          and is essential in queueing theory and financial modeling of default times.
+        programs: ["baruch-mfe", "columbia-msfe"]
+
+      - question: "You have n independent Uniform(0,1) random variables. What is the expected value of the maximum?"
+        difficulty: hard
+        topics: ["order_statistics", "expected_value"]
+        hint: "Find the CDF of the maximum, then compute the expectation."
+        solution: |
+          E[max] = n/(n+1).
+          Let M = max(X_1,...,X_n). The CDF is P(M <= x) = x^n for 0 <= x <= 1.
+          The PDF is f_M(x) = n*x^{n-1}.
+          E[M] = integral_0^1 x * n * x^{n-1} dx = n * integral_0^1 x^n dx = n/(n+1).
+          For n=1: E[max] = 1/2 (just a single uniform). For n=10: E[max] = 10/11 ~ 0.909.
+        programs: ["princeton-mfin", "stanford-mcf"]
+
+      - question: "What is a moment generating function (MGF)? Compute the MGF of a standard normal distribution."
+        difficulty: medium
+        topics: ["moment_generating_function", "normal_distribution"]
+        hint: "The MGF is E[e^{tX}]. For the normal, complete the square in the exponent."
+        solution: |
+          The MGF is M_X(t) = E[e^{tX}]. It uniquely determines the distribution (when it exists)
+          and the k-th moment is M^{(k)}(0) = E[X^k].
+          For Z ~ N(0,1): M_Z(t) = E[e^{tZ}] = integral e^{tz} * (1/sqrt(2*pi)) * e^{-z^2/2} dz.
+          Complete the square: tz - z^2/2 = -(z-t)^2/2 + t^2/2.
+          So M_Z(t) = e^{t^2/2} * integral (1/sqrt(2*pi)) * e^{-(z-t)^2/2} dz = e^{t^2/2}.
+        programs: ["baruch-mfe", "cmu-mscf", "berkeley-mfe"]
+
+      - question: "In a Poisson process with rate lambda, given that exactly one event occurred in [0, 1], what is the distribution of the event time?"
+        difficulty: medium
+        topics: ["poisson_process", "conditional_distribution"]
+        hint: "Think about the uniform order statistic property of the Poisson process."
+        solution: |
+          Uniform(0, 1). Given N(1) = 1 in a Poisson process with rate lambda, the single
+          arrival time is uniformly distributed on [0, 1]. More generally, given N(t) = n,
+          the n arrival times have the same distribution as n independent Uniform(0, t)
+          random variables sorted. This is the uniform order statistic property of the
+          Poisson process and is fundamental to simulation and thinning algorithms.
+        programs: ["columbia-msfe", "princeton-mfin"]
+
+      - question: "You shuffle a standard 52-card deck. What is the expected number of fixed points (cards that remain in their original position)?"
+        difficulty: medium
+        topics: ["expected_value", "indicator_variables", "derangement"]
+        hint: "Use indicator random variables. Let X_i = 1 if card i is in position i."
+        solution: |
+          E[fixed points] = 1. Let X_i = 1 if card i is in its original position.
+          E[X_i] = 1/52 for each i (card i is equally likely to be in any position).
+          By linearity of expectation: E[sum X_i] = sum E[X_i] = 52 * (1/52) = 1.
+          Remarkably, this equals 1 regardless of the deck size n (always n * 1/n = 1).
+          The variance is also 1. The number of fixed points is approximately Poisson(1)
+          for large n. The probability of zero fixed points (derangement) is ~1/e ~ 36.8%.
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "A box contains 5 red balls and 3 blue balls. You draw 3 balls without replacement. What is the probability of getting exactly 2 red balls?"
+        difficulty: easy
+        topics: ["hypergeometric", "combinatorics"]
+        hint: "This is a hypergeometric distribution problem. Choose 2 red from 5 and 1 blue from 3."
+        solution: |
+          P(2 red, 1 blue) = C(5,2) * C(3,1) / C(8,3) = 10 * 3 / 56 = 30/56 = 15/28 ~ 0.536.
+          This is the hypergeometric distribution: sampling without replacement from a finite
+          population. Parameters: N=8 total, K=5 red, n=3 drawn.
+          Key difference from binomial: no replacement means draws are not independent.
+          For large N relative to n, the hypergeometric approximates the binomial.
+        programs: ["baruch-mfe", "nyu-tandon-mfe"]
+
   - id: stochastic_calculus
     name: "Stochastic Calculus"
     questions:
@@ -181,6 +304,109 @@ categories:
           ordinary Lebesgue sense. It is fundamental for defining the Ito integral for general
           adapted processes and for computing variances of stochastic integrals.
         programs: ["cmu-mscf", "princeton-mfin"]
+
+      - question: "What is the Feynman-Kac theorem? How does it connect PDEs and stochastic processes?"
+        difficulty: hard
+        topics: ["feynman_kac", "pde", "conditional_expectation"]
+        hint: "It says the solution to certain PDEs can be written as a conditional expectation of a stochastic process."
+        solution: |
+          The Feynman-Kac theorem states that the solution to the PDE
+          u_t + mu(x)*u_x + 0.5*sigma(x)^2*u_xx - r*u = 0, u(T,x) = g(x)
+          is given by u(t,x) = E[e^{-r(T-t)} g(X_T) | X_t = x] where dX = mu*dt + sigma*dW.
+          This links PDEs to expected values -- central to derivative pricing. Black-Scholes PDE
+          is a special case: the option price equals the risk-neutral expected discounted payoff.
+          Practical use: solve the PDE numerically (finite differences) or compute the expectation
+          (Monte Carlo). The theorem justifies both approaches.
+        programs: ["princeton-mfin", "cmu-mscf", "stanford-mcf"]
+
+      - question: "What is the difference between the Ito and Stratonovich interpretations of SDEs?"
+        difficulty: hard
+        topics: ["ito", "stratonovich", "sde"]
+        hint: "The difference lies in the evaluation point of the integrand. Ito uses the left endpoint; Stratonovich uses the midpoint."
+        solution: |
+          Ito integral: integrand evaluated at the left endpoint of each partition interval.
+          Non-anticipative (adapted), but ordinary chain rule fails (need Ito's Lemma).
+          Stratonovich integral: integrand evaluated at the midpoint. The ordinary chain rule
+          holds, making it compatible with standard calculus. But the integrand is anticipative.
+          Conversion: integral f(X) o dW = integral f(X) dW + (1/2) integral f'(X)*sigma dt.
+          In finance: Ito is standard because it reflects the non-anticipative nature of trading
+          (you cannot peek at future prices). Stratonovich appears in physics and when converting
+          between continuous and discrete-time models.
+        programs: ["baruch-mfe", "princeton-mfin"]
+
+      - question: "Compute E[W_t * W_s] and Cov(W_t, W_s) for a standard Brownian motion, where s < t."
+        difficulty: easy
+        topics: ["brownian_motion", "covariance"]
+        hint: "Write W_t = W_s + (W_t - W_s) and use independence of increments."
+        solution: |
+          E[W_t * W_s] = E[(W_s + (W_t - W_s)) * W_s] = E[W_s^2] + E[(W_t - W_s)] * E[W_s]
+          = s + 0 = s. (Using independence of W_s and W_t - W_s.)
+          Since E[W_t] = E[W_s] = 0: Cov(W_t, W_s) = E[W_t * W_s] - E[W_t]*E[W_s] = s.
+          General formula: Cov(W_t, W_s) = min(t, s).
+          This is a fundamental property of Brownian motion used extensively in derivative pricing
+          and correlation modeling.
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "What is quadratic variation? Compute the quadratic variation of Brownian motion on [0, T]."
+        difficulty: medium
+        topics: ["quadratic_variation", "brownian_motion"]
+        hint: "Quadratic variation is the limit of the sum of squared increments over a partition. For smooth functions it is zero."
+        solution: |
+          Quadratic variation: [X]_T = lim_{n->inf} sum_{i=1}^n (X_{t_i} - X_{t_{i-1}})^2
+          over partitions {0 = t_0 < t_1 < ... < t_n = T} with mesh going to 0.
+          For Brownian motion: [W]_T = T. This is the crucial property that makes stochastic
+          calculus different from ordinary calculus: (dW)^2 = dt (not zero!).
+          For smooth functions f(t): [f]_T = 0 (increments are O(dt), so squared increments
+          sum to zero). For GBM: [ln S]_T = sigma^2 * T.
+          Quadratic variation drives the extra term in Ito's Lemma.
+        programs: ["cmu-mscf", "baruch-mfe"]
+
+      - question: "Define a martingale. Give two examples of martingales and two examples of non-martingales."
+        difficulty: easy
+        topics: ["martingale", "conditional_expectation"]
+        hint: "A martingale satisfies E[X_t | F_s] = X_s for all s < t. Think about Brownian motion and simple transformations."
+        solution: |
+          A stochastic process M_t is a martingale if E[M_t | F_s] = M_s for all s <= t
+          (the best prediction of the future value is the current value).
+          Martingales: (1) W_t (Brownian motion), (2) W_t^2 - t (compensated squared BM),
+          (3) e^{sigma*W_t - sigma^2*t/2} (exponential martingale).
+          Non-martingales: (1) W_t^2 (E[W_t^2 | F_s] = W_s^2 + (t-s) != W_s^2),
+          (2) t (deterministic trend), (3) S_t under real-world measure (has drift mu != r).
+          In finance: discounted asset prices are martingales under the risk-neutral measure.
+          This is the foundation of risk-neutral pricing.
+        programs: ["baruch-mfe", "cmu-mscf", "princeton-mfin"]
+
+      - question: "Explain the Ornstein-Uhlenbeck process. Where is it used in finance?"
+        difficulty: medium
+        topics: ["ornstein_uhlenbeck", "mean_reversion", "sde"]
+        hint: "It is the continuous-time analogue of a mean-reverting AR(1) process."
+        solution: |
+          The Ornstein-Uhlenbeck (OU) process is defined by dX_t = theta*(mu - X_t)*dt + sigma*dW_t
+          where theta > 0 is the mean-reversion speed, mu is the long-run mean, sigma is volatility.
+          Solution: X_t = mu + (X_0 - mu)*e^{-theta*t} + sigma * integral_0^t e^{-theta(t-s)} dW_s.
+          Key properties: (1) Mean-reverting to mu, (2) Stationary distribution is N(mu, sigma^2/(2*theta)),
+          (3) Autocorrelation decays exponentially: Corr(X_t, X_{t+s}) = e^{-theta*s}.
+          Finance applications: (1) Interest rate models (Vasicek model), (2) Pairs trading
+          (model the spread as OU), (3) Volatility modeling, (4) Commodity prices (mean-reverting
+          to production costs). The half-life of mean reversion is ln(2)/theta.
+        programs: ["baruch-mfe", "cmu-mscf", "princeton-mfin"]
+
+      - question: "What is the martingale representation theorem? Why is it important for hedging?"
+        difficulty: hard
+        topics: ["martingale", "hedging", "completeness"]
+        hint: "It says every martingale adapted to the Brownian filtration can be written as a stochastic integral."
+        solution: |
+          Martingale Representation Theorem: if M_t is a square-integrable martingale adapted
+          to the Brownian filtration F_t^W, then there exists an adapted process phi_t such that
+          M_t = M_0 + integral_0^t phi_s dW_s.
+          Significance for hedging: in a complete market (one stock, one Brownian motion),
+          every contingent claim can be replicated. The replicating portfolio holds phi_t shares
+          of the stock at time t. This means every derivative can be perfectly hedged, and the
+          unique no-arbitrage price is the risk-neutral expectation of the discounted payoff.
+          Without this theorem, we cannot guarantee that hedging strategies exist. Market
+          incompleteness (jumps, stochastic vol) breaks the theorem and requires choosing
+          among multiple risk-neutral measures.
+        programs: ["princeton-mfin", "stanford-mcf", "cmu-mscf"]
 
   - id: linear_algebra
     name: "Linear Algebra"
@@ -269,6 +495,84 @@ categories:
           (5) A = B^T B for some full-rank matrix B.
           Covariance matrices are always positive semi-definite; strictly PD when no perfect collinearity.
         programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "What is the condition number of a matrix? Why does it matter for numerical computations?"
+        difficulty: medium
+        topics: ["condition_number", "numerical_stability"]
+        hint: "Condition number = ratio of largest to smallest singular value. Think about amplification of errors."
+        solution: |
+          Condition number kappa(A) = ||A|| * ||A^{-1}|| = sigma_max / sigma_min (for 2-norm).
+          It measures how much errors in input (b in Ax=b) are amplified in the output (x).
+          If kappa(A) ~ 10^k, you lose about k digits of accuracy in the solution.
+          Large condition number (ill-conditioned): small perturbations in b cause large changes
+          in x. Common in finance: correlation matrices estimated from short time series.
+          Remedies: (1) Regularization (add lambda*I to the matrix), (2) SVD truncation
+          (discard small singular values), (3) Better conditioning via preprocessing.
+          Rule of thumb: kappa > 10^6 means serious numerical issues in double precision.
+        programs: ["cmu-mscf", "berkeley-mfe"]
+
+      - question: "Explain the QR decomposition and its use in least squares regression."
+        difficulty: medium
+        topics: ["qr_decomposition", "regression", "numerical_methods"]
+        hint: "QR decomposes A into an orthogonal Q and upper triangular R. How does this simplify solving Ax = b?"
+        solution: |
+          QR decomposition: A = Q*R where Q is orthogonal (Q^T Q = I) and R is upper triangular.
+          For least squares (Ax ~ b): the normal equations A^T A x = A^T b become
+          R^T Q^T Q R x = R^T Q^T b, so R x = Q^T b (upper triangular system, solved by
+          back-substitution in O(n^2)).
+          Advantages over normal equations (A^T A x = A^T b solved directly):
+          (1) Numerically more stable -- kappa(A^T A) = kappa(A)^2, but QR works with kappa(A).
+          (2) Avoids forming A^T A explicitly (less roundoff error).
+          QR is the standard method for regression in production numerical libraries (LAPACK, numpy).
+        programs: ["cmu-mscf", "baruch-mfe"]
+
+      - question: "What is the spectral theorem? State it for real symmetric matrices."
+        difficulty: medium
+        topics: ["spectral_theorem", "eigendecomposition", "symmetric_matrices"]
+        hint: "Real symmetric matrices have a very nice eigendecomposition. Think about orthogonality."
+        solution: |
+          Spectral theorem (real symmetric case): every real symmetric matrix A can be written as
+          A = Q * Lambda * Q^T where Q is orthogonal (columns are orthonormal eigenvectors) and
+          Lambda is diagonal (eigenvalues are real).
+          Key consequences: (1) Real symmetric matrices are always diagonalizable,
+          (2) Eigenvectors corresponding to distinct eigenvalues are orthogonal,
+          (3) A = sum_{i=1}^n lambda_i * q_i * q_i^T (outer product form),
+          (4) A is PD iff all eigenvalues are positive.
+          In finance: covariance matrices are real symmetric PSD, so the spectral theorem
+          guarantees PCA works. The eigenvalues give variance explained by each principal component.
+        programs: ["princeton-mfin", "cmu-mscf"]
+
+      - question: "How do you solve a system of linear equations Ax = b efficiently? Compare direct and iterative methods."
+        difficulty: medium
+        topics: ["linear_systems", "numerical_methods"]
+        hint: "Direct methods: exact in finite steps. Iterative methods: converge to the solution. Think about when each is preferred."
+        solution: |
+          Direct methods: (1) Gaussian elimination / LU decomposition: O(n^3), exact up to
+          roundoff. Standard for dense systems up to ~10,000 equations. (2) Cholesky (for SPD
+          matrices): ~n^3/6, twice as fast as LU.
+          Iterative methods: (1) Conjugate gradient (for SPD): converges in at most n steps,
+          but often much fewer with preconditioning. O(n) per iteration. (2) GMRES (general):
+          for non-symmetric systems.
+          Choose direct for small/medium dense systems. Choose iterative for large sparse systems
+          (PDEs, network problems). In quant finance: PDE solvers for option pricing use sparse
+          systems (tridiagonal from finite differences) -- solved in O(n) by Thomas algorithm.
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "What is the trace of a matrix? State three properties of the trace."
+        difficulty: easy
+        topics: ["trace", "matrix_properties"]
+        hint: "The trace is the sum of diagonal elements. Think about eigenvalues and cyclic permutations."
+        solution: |
+          Trace: tr(A) = sum of diagonal elements a_{ii}.
+          Properties: (1) tr(A) = sum of eigenvalues (algebraic counting).
+          (2) Cyclic property: tr(ABC) = tr(BCA) = tr(CAB). This does NOT mean tr(AB) = tr(BA)
+          is obvious -- it follows from the cyclic property with C = I. But tr(ABC) != tr(ACB)
+          in general.
+          (3) tr(A + B) = tr(A) + tr(B) and tr(cA) = c*tr(A) (linearity).
+          (4) tr(A^T) = tr(A).
+          In finance: tr(Sigma) = total variance of a portfolio's components. The trace of the
+          correlation matrix equals the number of assets (each diagonal element is 1).
+        programs: ["baruch-mfe", "nyu-tandon-mfe"]
 
   - id: programming
     name: "Programming & Algorithms"
@@ -367,6 +671,172 @@ categories:
           (4) asyncio for I/O-bound tasks (market data feeds).
         programs: ["baruch-mfe", "berkeley-mfe"]
 
+      - question: "Design and implement an LRU (Least Recently Used) cache with O(1) get and put operations."
+        difficulty: hard
+        topics: ["data_structures", "design", "python"]
+        hint: "Combine a hash map with a doubly linked list. Python's OrderedDict can also work."
+        solution: |
+          Use a hash map (dict) for O(1) key lookup and a doubly linked list for O(1)
+          eviction order. On get: move node to front of list. On put: if full, evict the
+          tail (LRU item). In Python, use collections.OrderedDict:
+          class LRUCache:
+              def __init__(self, capacity):
+                  self.cache = OrderedDict()
+                  self.cap = capacity
+              def get(self, key):
+                  if key not in self.cache: return -1
+                  self.cache.move_to_end(key)
+                  return self.cache[key]
+              def put(self, key, val):
+                  if key in self.cache: self.cache.move_to_end(key)
+                  self.cache[key] = val
+                  if len(self.cache) > self.cap: self.cache.popitem(last=False)
+          Applications: caching market data lookups, memoizing pricing calculations.
+        programs: ["cmu-mscf", "baruch-mfe"]
+
+      - question: "Implement a thread-safe producer-consumer queue in C++ using mutexes and condition variables."
+        difficulty: hard
+        topics: ["cpp", "concurrency", "data_structures"]
+        hint: "Use std::mutex, std::condition_variable, and std::queue. Think about when to notify."
+        solution: |
+          template<typename T>
+          class ThreadSafeQueue {
+              std::queue<T> q;
+              std::mutex mtx;
+              std::condition_variable cv;
+          public:
+              void push(T val) {
+                  std::lock_guard<std::mutex> lock(mtx);
+                  q.push(std::move(val));
+                  cv.notify_one();
+              }
+              T pop() {
+                  std::unique_lock<std::mutex> lock(mtx);
+                  cv.wait(lock, [this]{ return !q.empty(); });
+                  T val = std::move(q.front());
+                  q.pop();
+                  return val;
+              }
+          };
+          Key patterns: RAII locking, condition variable wait with predicate to avoid
+          spurious wakeups. Used in market data pipelines and order management systems.
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "Write a Python generator to compute a rolling standard deviation over a stream of prices without storing all past values."
+        difficulty: medium
+        topics: ["python", "generators", "streaming", "statistics"]
+        hint: "Use Welford's online algorithm: maintain running count, mean, and M2."
+        solution: |
+          def rolling_std(window):
+              from collections import deque
+              import math
+              buf = deque(maxlen=window)
+              s = 0.0   # sum
+              sq = 0.0  # sum of squares
+              while True:
+                  x = yield (math.sqrt((sq - s*s/len(buf)) / len(buf))
+                             if len(buf) == window else None)
+                  if len(buf) == window:
+                      old = buf[0]
+                      s -= old; sq -= old*old
+                  buf.append(x)
+                  s += x; sq += x*x
+          Generators are ideal for streaming financial data: they maintain state across
+          calls without holding the full history in memory.
+        programs: ["baruch-mfe", "berkeley-mfe"]
+
+      - question: "Implement a binomial tree pricer for an American put option using dynamic programming."
+        difficulty: hard
+        topics: ["dynamic_programming", "option_pricing", "python"]
+        hint: "Build the stock price tree forward, then work backward comparing exercise vs continuation value."
+        solution: |
+          import numpy as np
+          def american_put_binomial(S0, K, T, r, sigma, N):
+              dt = T / N
+              u = np.exp(sigma * np.sqrt(dt))
+              d = 1 / u
+              p = (np.exp(r * dt) - d) / (u - d)
+              # Terminal stock prices
+              ST = S0 * u ** np.arange(N, -1, -1) * d ** np.arange(0, N+1)
+              V = np.maximum(K - ST, 0)  # payoff at maturity
+              # Work backward
+              for i in range(N-1, -1, -1):
+                  Si = S0 * u ** np.arange(i, -1, -1) * d ** np.arange(0, i+1)
+                  V = np.exp(-r*dt) * (p * V[:-1] + (1-p) * V[1:])
+                  V = np.maximum(V, K - Si)  # early exercise check
+              return V[0]
+          Key: the American feature requires comparing exercise value at every node.
+        programs: ["baruch-mfe", "cmu-mscf", "princeton-mfin"]
+
+      - question: "Explain the difference between stack and heap memory allocation in C++. Why does it matter for low-latency systems?"
+        difficulty: medium
+        topics: ["cpp", "memory_management", "performance"]
+        hint: "Stack allocation is deterministic and fast. Heap allocation involves system calls and can cause fragmentation."
+        solution: |
+          Stack: automatic, LIFO, very fast (just a pointer adjustment), fixed size per thread
+          (typically 1-8 MB), deallocated automatically when scope ends.
+          Heap: dynamic, managed by malloc/new, slower (system calls, fragmentation, locking in
+          multi-threaded code), must be explicitly freed (or use smart pointers).
+          For low-latency trading: (1) Prefer stack-allocated objects in hot paths,
+          (2) Pre-allocate heap memory at startup, (3) Use custom allocators (arena/pool) to
+          avoid malloc in critical sections, (4) Avoid std::string and std::vector reallocations
+          in tight loops -- reserve capacity upfront. Deterministic latency requires eliminating
+          allocator unpredictability.
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "Implement a function to check if a binary tree is a valid Binary Search Tree (BST)."
+        difficulty: medium
+        topics: ["data_structures", "binary_tree", "recursion"]
+        hint: "A valid BST requires every node to satisfy constraints from all ancestors, not just its parent."
+        solution: |
+          def is_valid_bst(node, min_val=float('-inf'), max_val=float('inf')):
+              if node is None:
+                  return True
+              if node.val <= min_val or node.val >= max_val:
+                  return False
+              return (is_valid_bst(node.left, min_val, node.val) and
+                      is_valid_bst(node.right, node.val, max_val))
+          Key insight: checking only parent-child relationships is insufficient. Each node must
+          fall within a range defined by ALL its ancestors. The recursive approach passes these
+          bounds down the tree. Time: O(n), Space: O(h) where h is tree height.
+          Common mistake: only checking if left < parent < right at each node.
+        programs: ["cmu-mscf", "baruch-mfe"]
+
+      - question: "What is the difference between a process and a thread? Why does this matter for quantitative systems?"
+        difficulty: easy
+        topics: ["operating_systems", "concurrency"]
+        hint: "Processes have separate memory spaces; threads share memory within a process."
+        solution: |
+          Process: independent execution unit with its own memory space, file descriptors, and
+          resources. Inter-process communication (IPC) requires explicit mechanisms (pipes,
+          shared memory, sockets). Higher overhead to create/switch.
+          Thread: lightweight execution unit within a process. Shares memory, heap, and global
+          variables with other threads. Lower overhead but requires synchronization (mutexes,
+          locks) to avoid data races.
+          In quant systems: (1) Use threads for shared-memory parallelism (e.g., market data
+          feed updating a shared order book), (2) Use processes for isolation (e.g., separate
+          pricing engines that should not crash each other), (3) In Python, multiprocessing
+          bypasses the GIL for CPU-bound tasks. (4) Low-latency systems use lock-free data
+          structures and CPU affinity to minimize thread scheduling latency.
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "Explain hash tables. What is the expected and worst-case time complexity for operations?"
+        difficulty: easy
+        topics: ["data_structures", "hash_table"]
+        hint: "Hash tables use a hash function to map keys to array indices. Think about collisions."
+        solution: |
+          Hash table: array + hash function. For key k, compute index = hash(k) % table_size.
+          Store the (key, value) pair at that index.
+          Expected time: O(1) for insert, lookup, and delete (assuming good hash function
+          and reasonable load factor).
+          Worst case: O(n) when all keys hash to the same index (collision chain).
+          Collision resolution: (1) Chaining -- each bucket is a linked list of colliding entries,
+          (2) Open addressing -- probe for the next empty slot (linear, quadratic, double hashing).
+          Load factor = n/table_size. Resize (rehash) when load factor exceeds threshold (~0.75).
+          In finance: used for O(1) symbol lookups, order ID mapping, and caching computed
+          values. Python dicts and C++ unordered_map are hash table implementations.
+        programs: ["baruch-mfe", "cmu-mscf", "nyu-tandon-mfe"]
+
   - id: brainteasers
     name: "Brainteasers"
     questions:
@@ -447,6 +917,119 @@ categories:
           6. Pour from 5-gallon into 3-gallon (which has room for 1). (4, 3)
           The 5-gallon jug now has exactly 4 gallons.
         programs: ["nyu-tandon-mfe", "cornell-mfe"]
+
+      - question: "100 prisoners are lined up, each wearing a red or blue hat. Each can see the hats in front but not their own. Starting from the back, each must guess their hat color. They can strategize beforehand. At most how many can be saved with certainty?"
+        difficulty: hard
+        topics: ["logic", "parity", "strategy"]
+        hint: "The last person can communicate one bit of information through their guess. Think about parity."
+        solution: |
+          99 can be saved with certainty (the last person has 50/50 odds).
+          Strategy: the last person counts the number of red hats visible. If it is odd, they
+          say 'red'; if even, they say 'blue'. They sacrifice themselves (50% chance).
+          Each subsequent person counts the red hats they see, compares with the parity
+          announced so far, and deduces their own hat color with certainty.
+          This is a parity-based strategy: one bit of information (odd/even red count)
+          allows all 99 remaining prisoners to deduce their own hat color.
+        programs: ["baruch-mfe", "uchicago-msfm"]
+
+      - question: "You have 10 bags of coins, each containing many coins. Nine bags have coins weighing 10g each; one bag has coins weighing 11g. You have a digital scale you can use exactly once. Identify the heavy bag."
+        difficulty: medium
+        topics: ["logic", "encoding"]
+        hint: "Take different numbers of coins from each bag. The excess weight encodes the answer."
+        solution: |
+          Take 1 coin from bag 1, 2 from bag 2, ..., 10 from bag 10. Total coins: 55.
+          If all weighed 10g, total = 550g. The actual weight is 550 + k grams, where bag k
+          is the heavy bag (each of the k coins from that bag weighs 1g extra).
+          Example: if weight = 553g, then bag 3 is heavy (3 extra grams).
+          This encoding trick -- using different quantities to uniquely identify the source --
+          is a fundamental principle in information theory and interview problems.
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "You are given two identical eggs and a 100-floor building. Find the highest floor from which an egg can be dropped without breaking, using the minimum worst-case number of drops."
+        difficulty: hard
+        topics: ["dynamic_programming", "optimization"]
+        hint: "With 2 eggs, the optimal strategy uses roughly sqrt(200) ~ 14 drops. Think about the first drop floor."
+        solution: |
+          14 drops. Drop the first egg from floors 14, 27, 39, 50, 60, 69, 77, 84, 90, 95, 99, 100.
+          If it breaks at floor k, use the second egg to sequentially check floors from
+          the previous safe floor up to k-1 (at most 13 more drops).
+          The strategy ensures total drops <= 14 in the worst case.
+          Formula: with 2 eggs and n drops, we can check at most n*(n+1)/2 floors.
+          Solve n*(n+1)/2 >= 100: n = 14 (14*15/2 = 105 >= 100).
+          With k eggs and n drops: the answer involves binomial coefficients C(n,1)+C(n,2)+...+C(n,k).
+        programs: ["baruch-mfe", "cmu-mscf", "uchicago-msfm"]
+
+      - question: "A king puts 100 ants on a 1-meter stick. Each ant walks left or right at 1 cm/s. When two ants collide, they reverse direction. When an ant reaches the end, it falls off. How long until all ants fall off?"
+        difficulty: medium
+        topics: ["logic", "symmetry", "invariant"]
+        hint: "When two ants collide and reverse direction, it is equivalent to them passing through each other."
+        solution: |
+          100 seconds. The key insight: when two ants collide and reverse direction, the effect
+          is identical to them passing through each other (they are indistinguishable). So each
+          ant effectively walks in a straight line to one end of the stick, regardless of collisions.
+          The maximum time for any ant to reach an end is 1 meter / (1 cm/s) = 100 seconds.
+          This problem tests whether you can find the right abstraction. The collision behavior
+          is a red herring -- it does not change the individual ants' endpoints, only their identities.
+        programs: ["baruch-mfe", "mit-mfin"]
+
+      - question: "You have a 6x6 grid. How many rectangles (including squares) can be formed using the grid lines?"
+        difficulty: medium
+        topics: ["combinatorics", "counting"]
+        hint: "A rectangle is determined by choosing 2 horizontal lines and 2 vertical lines from the grid."
+        solution: |
+          C(7,2) * C(7,2) = 21 * 21 = 441 rectangles.
+          A 6x6 grid has 7 horizontal lines and 7 vertical lines. A rectangle is uniquely
+          determined by choosing 2 of the 7 horizontal lines (top and bottom edges) and 2 of
+          the 7 vertical lines (left and right edges).
+          C(7,2) = 7!/(2!*5!) = 21. Total rectangles = 21 * 21 = 441.
+          This includes all sizes: 1x1 (36), 1x2 (60), ..., 6x6 (1), etc.
+          General formula for an m x n grid: C(m+1, 2) * C(n+1, 2).
+        programs: ["nyu-tandon-mfe", "baruch-mfe"]
+
+      - question: "You have an 8x8 chessboard with two opposite corners removed. Can you tile the remaining 62 squares with 31 dominoes (each covering exactly 2 squares)?"
+        difficulty: medium
+        topics: ["logic", "coloring_argument", "proof"]
+        hint: "Color the board like a chessboard. What color are the two removed corners?"
+        solution: |
+          No, it is impossible. Color the board as a standard chessboard (alternating black
+          and white). The two opposite corners are the same color (both white, say).
+          Removing them leaves 30 white squares and 32 black squares.
+          Each domino covers exactly one white and one black square.
+          31 dominoes would cover 31 white and 31 black, but we have 30 white and 32 black.
+          Contradiction. Therefore, the tiling is impossible.
+          This is a beautiful example of a coloring/parity argument -- a powerful proof technique.
+        programs: ["baruch-mfe", "mit-mfin"]
+
+      - question: "Four people need to cross a bridge at night with one flashlight. They can cross at most two at a time, and they must carry the flashlight. Crossing times are 1, 2, 5, and 10 minutes. What is the minimum total crossing time?"
+        difficulty: medium
+        topics: ["optimization", "logic"]
+        hint: "The naive approach (fastest person always brings back the flashlight) is not optimal. Consider having slower people cross together."
+        solution: |
+          17 minutes. The optimal strategy:
+          1. Person 1 and 2 cross (2 min). Running total: 2.
+          2. Person 1 returns (1 min). Running total: 3.
+          3. Person 5 and 10 cross together (10 min). Running total: 13.
+          4. Person 2 returns (2 min). Running total: 15.
+          5. Person 1 and 2 cross (2 min). Running total: 17.
+          The key insight: pair the two slowest people together so their crossing time counts
+          only once (10 minutes instead of 10 + 5 = 15 minutes separately). The fast person (1)
+          acts as the shuttle to bring back the flashlight cheaply.
+        programs: ["baruch-mfe", "uchicago-msfm", "cmu-mscf"]
+
+      - question: "If you roll a fair die repeatedly, what is the expected number of rolls until you see two consecutive sixes?"
+        difficulty: hard
+        topics: ["markov_chains", "expected_value"]
+        hint: "Set up states: S0 (no recent six), S1 (last roll was a six), S2 (done). Write equations for expected rolls from each state."
+        solution: |
+          42 rolls. Define states: S0 = no recent six, S1 = last roll was 6, S2 = two consecutive sixes.
+          E[S0] = 1 + (1/6)*E[S1] + (5/6)*E[S0]
+          E[S1] = 1 + (1/6)*0 + (5/6)*E[S0]   (if six -> done, if not -> back to S0)
+          From E[S1]: E[S0] = 6/5 * (E[S1] - 1) = 6/5 * (1 + 5/6 * E[S0] - 1) = E[S0]...
+          Solving properly: From (2): E[S1] = 1 + (5/6)*E[S0].
+          Substituting into (1): E[S0] = 1 + (1/6)(1 + 5/6 * E[S0]) + (5/6)*E[S0]
+          E[S0] = 1 + 1/6 + 5/36 * E[S0] + 5/6 * E[S0] = 7/6 + 35/36 * E[S0].
+          (1/36)*E[S0] = 7/6, so E[S0] = 42.
+        programs: ["baruch-mfe", "cmu-mscf"]
 
   - id: finance
     name: "Finance & Markets"
@@ -556,6 +1139,139 @@ categories:
           The Gamma correction matters more for larger moves and ATM options (where Gamma peaks).
         programs: ["baruch-mfe", "columbia-msfe"]
 
+      - question: "What are the key assumptions of the Black-Scholes model? Which assumptions are most violated in practice?"
+        difficulty: medium
+        topics: ["black_scholes", "model_assumptions"]
+        hint: "List the assumptions, then consider real-world market behavior."
+        solution: |
+          Assumptions: (1) Log-normal stock prices (GBM), (2) Constant volatility,
+          (3) Constant risk-free rate, (4) No dividends, (5) No transaction costs or taxes,
+          (6) Continuous trading possible, (7) No arbitrage, (8) European-style exercise only.
+          Most violated: (a) Constant volatility -- real vol is stochastic and exhibits
+          clustering (GARCH, Heston models), (b) Log-normal returns -- real returns have fat
+          tails and negative skewness (crashes), (c) Continuous trading -- liquidity gaps, market
+          closures, (d) No transaction costs -- bid-ask spread matters for hedging.
+          Despite violations, BS remains the common language for quoting options (via implied vol).
+        programs: ["baruch-mfe", "cmu-mscf", "berkeley-mfe"]
+
+      - question: "Compare Monte Carlo simulation vs analytical pricing for options. When would you choose each?"
+        difficulty: medium
+        topics: ["monte_carlo", "option_pricing", "numerical_methods"]
+        hint: "Think about dimensionality, path dependence, and convergence."
+        solution: |
+          Analytical (closed-form): fast, exact, but only available for simple payoffs
+          (European vanilla via BS, some exotics). Limited to low dimensions.
+          Monte Carlo: general-purpose, handles any payoff (path-dependent, multi-asset,
+          early exercise via Longstaff-Schwartz). Convergence rate O(1/sqrt(N)) regardless
+          of dimension -- scales well for baskets. But: slow for simple problems, requires
+          variance reduction techniques (antithetic, control variate, importance sampling).
+          Choose analytical when available; MC for path-dependent exotics (barriers, Asians,
+          lookbacks), multi-asset options, and when the model itself is complex (stochastic
+          vol, jumps). PDE/finite-difference methods are a third option for 1-3 dimensions.
+        programs: ["cmu-mscf", "princeton-mfin", "baruch-mfe"]
+
+      - question: "Explain delta hedging. What risks remain after delta hedging?"
+        difficulty: medium
+        topics: ["hedging", "greeks", "risk_management"]
+        hint: "Delta hedging eliminates first-order price risk. But what about second-order and other risks?"
+        solution: |
+          Delta hedging: hold Delta shares of the underlying against an option position to
+          eliminate first-order sensitivity to small price moves. Continuously rebalanced.
+          Remaining risks after delta hedging:
+          (1) Gamma risk -- large moves cause Delta to change; hedging error accumulates,
+          (2) Vega risk -- changes in implied volatility affect option value,
+          (3) Theta -- time decay (a known cost/benefit),
+          (4) Discrete hedging -- in practice, you rebalance at intervals, not continuously,
+          (5) Model risk -- if the underlying does not follow GBM (jumps, stochastic vol),
+          (6) Transaction costs -- frequent rebalancing is expensive.
+          A delta-hedged portfolio is primarily a bet on realized vs implied volatility.
+        programs: ["baruch-mfe", "berkeley-mfe", "columbia-msfe"]
+
+      - question: "What is market microstructure? Explain the bid-ask spread and its components."
+        difficulty: medium
+        topics: ["market_microstructure", "bid_ask_spread"]
+        hint: "Think about why market makers quote a spread. Consider adverse selection, inventory, and order processing."
+        solution: |
+          Market microstructure studies how trading mechanisms affect price formation, liquidity,
+          and transaction costs. The bid-ask spread has three components:
+          (1) Adverse selection -- risk of trading with informed traders who know the true value.
+              Wider spread compensates the market maker for losses to informed traders.
+          (2) Inventory risk -- holding a position exposes the market maker to price risk.
+              The spread compensates for carrying inventory.
+          (3) Order processing costs -- operational costs of maintaining quotes and executing trades.
+          In liquid markets (SPY), spreads are tight (1 cent). In illiquid markets (small-caps,
+          OTC derivatives), spreads are wide. Understanding microstructure is crucial for
+          execution algorithms (VWAP, TWAP) and optimal execution research.
+        programs: ["uchicago-msfm", "nyu-tandon-mfe", "baruch-mfe"]
+
+      - question: "What is pairs trading? Describe the basic statistical arbitrage strategy."
+        difficulty: easy
+        topics: ["pairs_trading", "statistical_arbitrage", "mean_reversion"]
+        hint: "Find two correlated assets, model their spread, and trade when the spread deviates."
+        solution: |
+          Pairs trading: identify two historically correlated/cointegrated assets (e.g., Coca-Cola
+          and Pepsi). Compute the spread = price_A - beta * price_B. When the spread deviates
+          significantly from its mean (e.g., > 2 standard deviations):
+          - Long the underperformer, short the outperformer.
+          - Close when spread reverts to mean.
+          Key statistical concepts: cointegration (not just correlation), stationarity of
+          the spread, Ornstein-Uhlenbeck process modeling.
+          Risks: (1) Spread may not revert (structural break), (2) Drawdowns during divergence,
+          (3) Cointegration relationship can break down, (4) Crowded trade -- many quants use
+          the same pairs. Modern variants use ML for pair selection and dynamic hedge ratios.
+        programs: ["baruch-mfe", "cmu-mscf", "columbia-msfe"]
+
+      - question: "What is Value at Risk (VaR)? What are its limitations?"
+        difficulty: medium
+        topics: ["risk_management", "var"]
+        hint: "VaR answers: what is the worst loss at a given confidence level? Think about what it does NOT tell you."
+        solution: |
+          VaR: the maximum loss not exceeded with probability (1-alpha) over a given time horizon.
+          Example: 1-day 95% VaR of $1M means there is a 5% chance of losing more than $1M in a day.
+          Computation methods: (1) Historical simulation, (2) Parametric (variance-covariance),
+          (3) Monte Carlo simulation.
+          Limitations: (1) Does not measure the size of tail losses (only the threshold),
+          (2) Not sub-additive -- VaR of a portfolio can exceed sum of component VaRs,
+          (3) Assumes a specific distribution (often normal, but tails are fatter),
+          (4) Backward-looking (historical data may not reflect future risks).
+          CVaR (Expected Shortfall) addresses limitation (1) by averaging losses beyond VaR.
+          CVaR is also coherent (sub-additive) and is now preferred by Basel III regulations.
+        programs: ["baruch-mfe", "cmu-mscf", "columbia-msfe"]
+
+      - question: "What is a yield curve? What information does its shape convey?"
+        difficulty: easy
+        topics: ["fixed_income", "yield_curve", "term_structure"]
+        hint: "The yield curve plots bond yields vs maturity. Normal, inverted, and flat shapes each signal something."
+        solution: |
+          The yield curve plots interest rates (yields) of bonds with the same credit quality
+          but different maturities (typically US Treasuries).
+          Normal (upward sloping): longer maturities have higher yields. Reflects term premium
+          (compensation for holding longer-duration bonds) and expectations of future rate increases.
+          Inverted (downward sloping): short-term rates exceed long-term. Historically a reliable
+          recession predictor (7 of last 7 US recessions were preceded by yield curve inversion).
+          Flat: similar rates across maturities. Transitional, often signals uncertainty.
+          Key rates: 2-year and 10-year Treasury. The 2s10s spread is the most watched indicator.
+          Quantitative use: bootstrapping zero-coupon rates, pricing fixed income derivatives,
+          and extracting market expectations for future interest rates.
+        programs: ["baruch-mfe", "columbia-msfe", "mit-mfin"]
+
+      - question: "What is the Sharpe ratio? What are its limitations and alternatives?"
+        difficulty: easy
+        topics: ["performance_measurement", "sharpe_ratio"]
+        hint: "Sharpe = (return - risk_free) / std_dev. Think about what assumptions this makes."
+        solution: |
+          Sharpe ratio: SR = (R_p - R_f) / sigma_p. Measures excess return per unit of total risk.
+          Higher is better. Benchmark: SR > 1 is good, > 2 is excellent, > 3 is exceptional.
+          Limitations: (1) Assumes normal returns -- penalizes upside and downside equally,
+          (2) Not meaningful for strategies with non-normal returns (options, trend-following),
+          (3) Can be gamed by selling deep OTM options (collect premium, inflate SR until crash),
+          (4) Time-period dependent and sensitive to the frequency of return measurement.
+          Alternatives: (1) Sortino ratio -- uses downside deviation only,
+          (2) Calmar ratio -- return / max drawdown (captures tail risk),
+          (3) Information ratio -- excess return vs benchmark / tracking error,
+          (4) Deflated Sharpe ratio -- adjusts for multiple testing.
+        programs: ["baruch-mfe", "cmu-mscf", "berkeley-mfe"]
+
   - id: behavioral
     name: "Behavioral"
     questions:
@@ -643,3 +1359,861 @@ categories:
           - Online: QuantNet forums, Wilmott, arXiv quant-ph/q-fin
           Key: don't just name-drop. Explain what you learned and how it shaped your interests.
         programs: ["baruch-mfe", "cmu-mscf", "princeton-mfin", "stanford-mcf"]
+
+      - question: "Describe a situation where you had to learn a new technical skill quickly. How did you approach it?"
+        difficulty: easy
+        topics: ["learning_agility", "self_directed"]
+        hint: "Show structured learning approach, resourcefulness, and measurable progress."
+        solution: |
+          Strong answer: (1) Context -- what skill and why was it urgent (internship requirement,
+          research need, competition deadline), (2) Learning strategy -- structured approach
+          (online course, textbook, mentor, hands-on projects), (3) Milestones -- how you
+          tracked progress (completed X chapters, built Y project, passed Z test),
+          (4) Outcome -- how the skill was applied and the result achieved.
+          MFE programs value learning agility because the curriculum is intense and broad.
+          Show you can pick up C++, stochastic calculus, or a new framework efficiently.
+        programs: ["baruch-mfe", "cmu-mscf", "mit-mfin"]
+
+      - question: "What is your understanding of the quant role? How does it differ across buy-side, sell-side, and fintech?"
+        difficulty: easy
+        topics: ["career_awareness", "industry_knowledge"]
+        hint: "Show you understand the different types of quant roles and where they sit in the financial ecosystem."
+        solution: |
+          Sell-side (banks): pricing and hedging derivatives, risk management models, XVA
+          (credit, funding valuation adjustments). Focus on model validation and regulation.
+          Buy-side (hedge funds, asset managers): alpha generation, systematic trading strategies,
+          portfolio optimization, risk analytics. Focus on PnL and Sharpe ratio.
+          Prop trading firms: market making, statistical arbitrage, ultra-low-latency systems.
+          Focus on speed, execution, and technology.
+          Fintech: quantitative modeling for lending, insurance, payment optimization.
+          MFE graduates typically enter sell-side desk quant or buy-side quant researcher roles,
+          with increasing movement toward systematic trading and fintech.
+        programs: ["baruch-mfe", "cmu-mscf", "princeton-mfin", "berkeley-mfe"]
+
+      - question: "Why this program specifically? What sets it apart from other MFE programs?"
+        difficulty: easy
+        topics: ["program_fit", "research"]
+        hint: "Be specific about curriculum, faculty, industry connections, and culture. Generic answers fail."
+        solution: |
+          Framework for each program:
+          Baruch: strongest in C++ and practical trading skills, Dan Stefanica's math prep,
+          Wall Street proximity, excellent job placement rate at lower cost.
+          CMU MSCF: cross-disciplinary (Tepper + Math + CS), strong ML focus, Pittsburgh network.
+          Princeton MFin: top quantitative rigor, research-oriented, small cohort, prestige.
+          Berkeley MFE: Silicon Valley connections, computational focus, diverse cohort.
+          MIT MFin: brand name, general finance + quant blend, Boston finance ecosystem.
+          Key: mention specific courses, professors, clubs, or alumni you have researched.
+          Show that you have done your homework and this is not a generic application.
+        programs: ["baruch-mfe", "cmu-mscf", "princeton-mfin", "mit-mfin", "berkeley-mfe"]
+
+      - question: "How do you stay current with developments in quantitative finance and technology?"
+        difficulty: easy
+        topics: ["intellectual_curiosity", "continuous_learning"]
+        hint: "Show ongoing engagement beyond coursework: reading, projects, competitions, communities."
+        solution: |
+          Strong answers include specific, verifiable activities:
+          (1) Regular reading: Risk.net, arXiv q-fin, Bloomberg, WSJ markets section.
+          (2) Technical practice: Kaggle competitions, LeetCode, personal trading projects.
+          (3) Community: QuantNet forums, local quant meetups, university quant clubs.
+          (4) Online courses: ongoing Coursera/edX courses in ML, statistics, or programming.
+          (5) Research: following specific researchers or papers in your area of interest.
+          Interviewers want to see genuine curiosity and initiative, not just classroom learning.
+          Mention something recent you read that excited you and explain why.
+        programs: ["baruch-mfe", "cmu-mscf", "berkeley-mfe", "stanford-mcf"]
+
+      - question: "Tell me about a time you failed. What did you learn from the experience?"
+        difficulty: easy
+        topics: ["resilience", "growth_mindset"]
+        hint: "Choose a genuine failure with a clear lesson. Show reflection and how it changed your approach."
+        solution: |
+          Framework: (1) The failure -- be specific and honest (bombed an exam, lost money on
+          a trade, missed a deadline, made a coding error with consequences).
+          (2) What went wrong -- identify the root cause (overconfidence, poor preparation,
+          time management, inadequate testing).
+          (3) The lesson -- what you changed as a result (new study method, risk management
+          discipline, code review process, time blocking).
+          (4) Evidence of change -- show how you applied the lesson successfully later.
+          Interviewers respect honesty and self-awareness. Avoid fake failures that are really
+          humble brags. The quality of the reflection matters more than the severity of the failure.
+        programs: ["baruch-mfe", "cmu-mscf", "princeton-mfin"]
+
+      - question: "Explain a complex quantitative concept to me as if I were a non-technical person."
+        difficulty: medium
+        topics: ["communication", "simplification"]
+        hint: "Choose a concept you know well and use analogies. This tests communication skill, not technical depth."
+        solution: |
+          This question tests your ability to communicate complex ideas clearly -- essential
+          for working with traders, portfolio managers, and clients who may not be quants.
+          Good examples to explain:
+          - Options: "Insurance for stocks. You pay a premium for the right to buy/sell at a
+            certain price, just like car insurance pays if damage exceeds a deductible."
+          - Monte Carlo: "Imagine flipping a coin 10,000 times to estimate the probability of
+            heads. We do the same thing with stock prices -- simulate thousands of possible
+            futures to estimate what a financial product is worth."
+          - Correlation: "How much two things tend to move together. When it rains, umbrella
+            sales go up (positive correlation). When it is sunny, raincoat sales go down
+            (negative correlation)."
+          Keep it simple, use everyday analogies, and check understanding.
+        programs: ["baruch-mfe", "cmu-mscf", "mit-mfin", "berkeley-mfe"]
+
+      - question: "What current market events or trends are you following, and what is your view?"
+        difficulty: easy
+        topics: ["market_awareness", "critical_thinking"]
+        hint: "Show you follow markets actively. Have a specific, well-reasoned view on a current topic."
+        solution: |
+          This tests market awareness and analytical thinking. Strong answers:
+          (1) Name a specific current event (interest rate decisions, earnings season, geopolitical
+          risk, AI/tech disruption, crypto regulation, trade policy).
+          (2) Show understanding of the mechanics (how it affects different asset classes,
+          what the market is pricing in, what could surprise).
+          (3) Have a view, and support it with data or reasoning (not just opinion).
+          (4) Acknowledge uncertainty and alternative scenarios.
+          Example structure: "I am following [topic] because [relevance]. The market seems to
+          be pricing [X], but I think [Y] because [data/reasoning]. The key risk to my view
+          is [Z]." Avoid extreme or politically charged views. Show nuance and analytical rigor.
+        programs: ["baruch-mfe", "cmu-mscf", "princeton-mfin", "columbia-msfe"]
+
+  - id: machine_learning
+    name: "Machine Learning & AI"
+    questions:
+      - question: "Explain the bias-variance tradeoff. How does it affect model selection in quantitative finance?"
+        difficulty: easy
+        topics: ["bias_variance", "model_selection"]
+        hint: "Total error = bias^2 + variance + irreducible noise. Simple models have high bias, complex models have high variance."
+        solution: |
+          Bias: error from overly simplistic model assumptions (underfitting). High bias means
+          the model misses relevant patterns.
+          Variance: error from sensitivity to training data fluctuations (overfitting). High
+          variance means the model captures noise as if it were signal.
+          Tradeoff: increasing model complexity reduces bias but increases variance.
+          In quant finance: financial data is noisy with low signal-to-noise ratio, so overfitting
+          is the primary danger. A simple linear model often outperforms a deep neural network
+          on out-of-sample prediction. Use cross-validation and regularization to find the
+          sweet spot. Walk-forward validation is essential (no peeking at future data).
+        programs: ["cmu-mscf", "baruch-mfe", "berkeley-mfe"]
+
+      - question: "What is regularization? Compare L1 (Lasso) and L2 (Ridge) regularization."
+        difficulty: easy
+        topics: ["regularization", "lasso", "ridge"]
+        hint: "Both add a penalty to the loss function. L1 uses absolute values, L2 uses squares. Think about sparsity."
+        solution: |
+          Regularization adds a penalty term to the loss function to prevent overfitting.
+          L2 (Ridge): min ||y - X*beta||^2 + lambda * ||beta||^2. Shrinks coefficients toward
+          zero but rarely sets them exactly to zero. Good when all features contribute.
+          L1 (Lasso): min ||y - X*beta||^2 + lambda * ||beta||_1. Can set coefficients exactly
+          to zero -- automatic feature selection. Good when only a few features matter.
+          Elastic Net combines both: alpha * L1 + (1-alpha) * L2.
+          In finance: Lasso is useful for factor selection (which of 100 potential factors
+          actually predict returns?). Ridge is better for correlated features (common in
+          financial data). Lambda is chosen via cross-validation.
+        programs: ["cmu-mscf", "berkeley-mfe", "columbia-msfe"]
+
+      - question: "Explain gradient descent and its variants (SGD, Adam). What challenges arise with financial data?"
+        difficulty: medium
+        topics: ["optimization", "gradient_descent", "sgd"]
+        hint: "Gradient descent updates parameters in the direction of steepest descent. Consider learning rate and non-convexity."
+        solution: |
+          Gradient descent: theta_{t+1} = theta_t - eta * gradient(L(theta_t)).
+          Variants: (1) Batch GD -- uses full dataset, stable but slow for large data.
+          (2) SGD -- uses one sample per step, noisy but fast, can escape local minima.
+          (3) Mini-batch SGD -- compromise, uses a subset.
+          (4) Adam -- adaptive learning rates per parameter, combines momentum and RMSprop.
+          Challenges with financial data: (1) Non-stationary -- data distribution shifts over
+          time, (2) Low signal-to-noise -- gradients are noisy, (3) Regime changes -- model
+          needs retraining, (4) Temporal structure -- cannot shuffle data randomly (use
+          sequential batches), (5) Class imbalance -- extreme events are rare but important.
+        programs: ["cmu-mscf", "berkeley-mfe", "uchicago-msfm"]
+
+      - question: "Describe how a neural network works. What is backpropagation?"
+        difficulty: medium
+        topics: ["neural_networks", "backpropagation", "deep_learning"]
+        hint: "A neural network is a composition of linear transformations and nonlinear activations. Backprop efficiently computes gradients using the chain rule."
+        solution: |
+          A neural network computes y = f_L(W_L * f_{L-1}(...f_1(W_1 * x + b_1)...) + b_L),
+          where f_i are activation functions (ReLU, sigmoid, tanh), W_i are weight matrices.
+          Backpropagation: efficiently computes dL/dW_i for all layers using the chain rule,
+          working backward from the output layer. The gradient at each layer depends on the
+          gradient from the layer above (dynamic programming on the computation graph).
+          Key concepts: vanishing/exploding gradients (solved by ReLU, batch norm, residual
+          connections), universal approximation theorem (one hidden layer can approximate any
+          continuous function, but depth helps in practice).
+          In finance: used for nonlinear factor models, option pricing (learning the BS
+          function), and market making (predicting short-term price movements).
+        programs: ["cmu-mscf", "berkeley-mfe", "stanford-mcf"]
+
+      - question: "What are ensemble methods? Compare Random Forest and Gradient Boosting."
+        difficulty: medium
+        topics: ["ensemble_methods", "random_forest", "boosting"]
+        hint: "Ensembles combine multiple weak learners. Random Forest uses bagging; Gradient Boosting uses sequential correction."
+        solution: |
+          Ensemble methods combine multiple models to improve prediction accuracy.
+          Random Forest: bagging + random feature selection. Trains many independent decision
+          trees on bootstrap samples, averages predictions. Reduces variance. Parallelizable.
+          Gradient Boosting (XGBoost, LightGBM): trains trees sequentially, each fitting the
+          residuals of the previous ensemble. Reduces bias. More prone to overfitting.
+          Comparison: RF is robust and hard to overfit; GB often achieves higher accuracy but
+          needs careful tuning (learning rate, max depth, early stopping).
+          In finance: GB dominates Kaggle-style competitions and cross-sectional return
+          prediction. RF is popular for feature importance analysis. Both handle nonlinear
+          relationships and interactions without explicit specification.
+        programs: ["cmu-mscf", "berkeley-mfe", "baruch-mfe"]
+
+      - question: "Explain cross-validation. Why is standard k-fold CV problematic for time series data?"
+        difficulty: easy
+        topics: ["cross_validation", "time_series", "model_evaluation"]
+        hint: "Standard CV randomly shuffles data, but time series has temporal ordering. Think about data leakage."
+        solution: |
+          k-fold CV: split data into k folds, train on k-1 folds, validate on the remaining
+          one, rotate. Provides unbiased estimate of out-of-sample performance.
+          Problem with time series: random splitting causes data leakage -- the model trains
+          on future data to predict the past. This inflates accuracy estimates.
+          Solutions: (1) Walk-forward validation -- train on [1,t], test on [t+1,t+h], expand
+          window and repeat. (2) Purged k-fold CV -- remove observations near the train/test
+          boundary to prevent information leakage. (3) Combinatorial purged CV (de Prado) --
+          generates multiple train/test splits respecting temporal ordering.
+          Always use time-aware validation in finance to avoid overly optimistic backtests.
+        programs: ["baruch-mfe", "cmu-mscf", "uchicago-msfm"]
+
+      - question: "What is feature selection and why is it important in financial ML? Name three methods."
+        difficulty: easy
+        topics: ["feature_selection", "dimensionality"]
+        hint: "Too many features relative to observations leads to overfitting. Think about filter, wrapper, and embedded methods."
+        solution: |
+          Feature selection reduces the number of input variables to improve model performance
+          and interpretability. In finance, the number of potential features (technical indicators,
+          fundamental ratios, macro variables) often exceeds the number of useful observations.
+          Three methods:
+          (1) Filter methods: rank features by statistical test (correlation, mutual information,
+              variance threshold). Fast but ignores feature interactions.
+          (2) Wrapper methods: evaluate subsets by training models (forward/backward selection,
+              recursive feature elimination). Accurate but computationally expensive.
+          (3) Embedded methods: feature selection during model training (Lasso L1 penalty,
+              tree-based feature importance). Balance between speed and accuracy.
+          In practice, combine tree-based importance with domain knowledge (economic rationale).
+        programs: ["cmu-mscf", "berkeley-mfe", "columbia-msfe"]
+
+      - question: "Explain how overfitting manifests in quantitative trading strategies. How do you detect and prevent it?"
+        difficulty: medium
+        topics: ["overfitting", "backtesting", "model_validation"]
+        hint: "A strategy that works perfectly in backtesting but fails live is likely overfit. Think about degrees of freedom."
+        solution: |
+          Overfitting in trading: the strategy captures noise or historical coincidences
+          rather than genuine market patterns. Signs: (1) Backtest Sharpe >> live Sharpe,
+          (2) Performance degrades out-of-sample, (3) Many parameters relative to data points,
+          (4) Strategy relies on specific historical events.
+          Detection: (1) Out-of-sample testing (walk-forward), (2) Monte Carlo permutation
+          tests (if random data produces similar results, the signal is noise),
+          (3) Haircut the Sharpe ratio based on number of trials (Deflated Sharpe Ratio).
+          Prevention: (1) Fewer parameters, (2) Economic rationale for signals,
+          (3) Multiple testing correction, (4) Robust estimation methods,
+          (5) Paper trading before going live.
+        programs: ["baruch-mfe", "cmu-mscf", "uchicago-msfm"]
+
+      - question: "What is PCA (Principal Component Analysis)? How is it used for dimensionality reduction in finance?"
+        difficulty: medium
+        topics: ["pca", "dimensionality_reduction", "factor_models"]
+        hint: "PCA finds orthogonal directions of maximum variance. Think about the eigendecomposition of the covariance matrix."
+        solution: |
+          PCA: decompose the covariance matrix Sigma = V * Lambda * V^T where V contains
+          eigenvectors (principal components) and Lambda contains eigenvalues (variance
+          explained). Project data onto the top k eigenvectors to reduce dimensionality.
+          In finance: (1) Yield curve modeling -- 3 PCs explain ~99% of variance (level, slope,
+          curvature), (2) Equity factor models -- first PC is the market factor,
+          (3) Risk decomposition -- identify the main sources of portfolio risk,
+          (4) Noise reduction in correlation matrices -- eigenvalue cleaning (Marcenko-Pastur),
+          (5) Dimensionality reduction before regression to avoid multicollinearity.
+          Limitation: PCA is linear. For nonlinear patterns, consider autoencoders or t-SNE.
+        programs: ["baruch-mfe", "cmu-mscf", "princeton-mfin"]
+
+      - question: "How can reinforcement learning be applied to trading? What are the key challenges?"
+        difficulty: hard
+        topics: ["reinforcement_learning", "trading", "mdp"]
+        hint: "Model trading as a Markov Decision Process: state (market info), action (buy/sell/hold), reward (PnL)."
+        solution: |
+          RL formulation: State = (market features, current position, PnL). Action = (buy,
+          sell, hold, position size). Reward = realized PnL or risk-adjusted return (Sharpe).
+          Methods: (1) Q-learning / DQN -- learn action-value function for discrete actions,
+          (2) Policy gradient (PPO, A2C) -- directly optimize the policy for continuous actions,
+          (3) Model-based RL -- learn market dynamics and plan.
+          Challenges: (1) Non-stationarity -- market regime changes invalidate learned policies,
+          (2) Partial observability -- state is incomplete, (3) Delayed rewards -- PnL realized
+          only at trade close, (4) Simulation-reality gap -- backtest environment oversimplifies
+          slippage, market impact, and liquidity, (5) Sample efficiency -- financial data is
+          limited; can't simulate millions of episodes like in games.
+        programs: ["cmu-mscf", "stanford-mcf", "uchicago-msfm"]
+
+      - question: "What is the difference between supervised and unsupervised learning? Give examples from finance."
+        difficulty: easy
+        topics: ["supervised_learning", "unsupervised_learning"]
+        hint: "Supervised has labeled targets; unsupervised discovers structure without labels."
+        solution: |
+          Supervised learning: input-output pairs (X, y). Learn f: X -> y. Goal: prediction.
+          Finance examples: (1) Predicting stock returns (regression), (2) Credit scoring
+          (classification: default or not), (3) Predicting option prices from features.
+          Unsupervised learning: only inputs X, no labels. Goal: discover structure.
+          Finance examples: (1) Clustering stocks into sectors (k-means on returns),
+          (2) Anomaly detection in trading patterns, (3) PCA for factor extraction,
+          (4) Regime detection (hidden Markov models on market states).
+          Semi-supervised (less common): use a small amount of labeled data with large
+          unlabeled data. Useful when labeling is expensive (e.g., labeling market regimes).
+        programs: ["cmu-mscf", "baruch-mfe", "berkeley-mfe"]
+
+      - question: "What is a decision tree? What are its advantages and disadvantages?"
+        difficulty: easy
+        topics: ["decision_tree", "model_selection"]
+        hint: "Trees split data recursively based on feature thresholds. Think about interpretability vs performance."
+        solution: |
+          A decision tree recursively partitions the feature space using binary splits
+          (e.g., if volume > threshold, go left; else go right). At each leaf, predict the
+          majority class (classification) or mean value (regression).
+          Advantages: (1) Highly interpretable (can visualize the tree), (2) Handles nonlinear
+          relationships, (3) No feature scaling needed, (4) Handles mixed data types.
+          Disadvantages: (1) High variance -- small data changes produce different trees,
+          (2) Prone to overfitting (deep trees memorize training data), (3) Greedy splitting
+          is not globally optimal, (4) Biased toward features with many levels.
+          In practice: rarely used alone. Ensemble methods (Random Forest, XGBoost) combine
+          many trees to overcome individual tree weaknesses.
+        programs: ["cmu-mscf", "berkeley-mfe"]
+
+      - question: "Explain the concept of dropout in neural networks. Why does it work as regularization?"
+        difficulty: medium
+        topics: ["neural_networks", "regularization", "dropout"]
+        hint: "During training, randomly set neurons to zero with some probability. Think about why this prevents co-adaptation."
+        solution: |
+          Dropout: during each training step, independently set each neuron's output to zero
+          with probability p (typically 0.2-0.5). At test time, use all neurons but scale
+          outputs by (1-p).
+          Why it works: (1) Prevents co-adaptation -- neurons cannot rely on specific other
+          neurons, forcing each to learn useful features independently, (2) Equivalent to
+          training an exponential number of sub-networks and averaging (ensemble effect),
+          (3) Adds noise to the training process (implicit regularization).
+          In finance: useful when training neural networks on noisy financial data where
+          overfitting is a major concern. Applied in deep learning for return prediction,
+          volatility forecasting, and NLP-based sentiment analysis.
+        programs: ["cmu-mscf", "stanford-mcf"]
+
+      - question: "What is the curse of dimensionality? How does it affect machine learning in finance?"
+        difficulty: medium
+        topics: ["curse_of_dimensionality", "feature_engineering"]
+        hint: "As dimensions increase, data becomes sparse. Think about distances and volume in high dimensions."
+        solution: |
+          The curse of dimensionality: as the number of features grows, the volume of the
+          feature space increases exponentially, making data sparse. Consequences:
+          (1) Distance-based methods (k-NN, kernel methods) break down -- all points become
+          approximately equidistant in high dimensions.
+          (2) More data needed -- to maintain the same density, data requirements grow
+          exponentially with dimensions.
+          (3) Overfitting risk increases -- more parameters to fit with the same amount of data.
+          In finance: hundreds of potential features (technical indicators, fundamentals, macro)
+          but limited historical data. Solutions: (1) Feature selection/engineering,
+          (2) PCA/dimensionality reduction, (3) Regularization (Lasso, Ridge),
+          (4) Domain knowledge to select relevant features.
+        programs: ["cmu-mscf", "berkeley-mfe", "baruch-mfe"]
+
+      - question: "What is transfer learning? Can it be applied to financial problems?"
+        difficulty: medium
+        topics: ["transfer_learning", "deep_learning"]
+        hint: "Pre-train on a large dataset, fine-tune on a smaller target dataset. Think about whether financial patterns transfer across markets."
+        solution: |
+          Transfer learning: use knowledge learned from one task (source) to improve performance
+          on a related task (target). Typically: pre-train a neural network on a large dataset,
+          then fine-tune the final layers on the smaller target dataset.
+          In finance: (1) Pre-train NLP models (BERT, GPT) on general text, fine-tune for
+          financial sentiment analysis on earnings calls, news, or SEC filings.
+          (2) Pre-train time series models on multiple assets, transfer to a new asset with
+          limited history. (3) Transfer across markets -- patterns from US equities may
+          partially transfer to emerging markets.
+          Challenges: financial data is non-stationary, so transferred features may become
+          outdated. Requires careful validation that transfer actually helps.
+        programs: ["cmu-mscf", "stanford-mcf", "uchicago-msfm"]
+
+  - id: mental_math
+    name: "Mental Math & Quick Estimation"
+    questions:
+      - question: "What is 17 x 23?"
+        difficulty: easy
+        topics: ["multiplication", "mental_math"]
+        hint: "Break it up: 17 x 23 = 17 x 20 + 17 x 3."
+        solution: |
+          391. Method 1: 17 x 23 = 17 x 20 + 17 x 3 = 340 + 51 = 391.
+          Method 2: (20 - 3)(20 + 3) = 400 - 9 = 391 (difference of squares, since 17 = 20-3
+          and 23 = 20+3).
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "Estimate sqrt(150) without a calculator."
+        difficulty: easy
+        topics: ["estimation", "square_roots"]
+        hint: "12^2 = 144 and 13^2 = 169. Interpolate."
+        solution: |
+          About 12.25. Since 12^2 = 144 and 13^2 = 169, sqrt(150) is between 12 and 13.
+          150 is 6/25 of the way from 144 to 169, so sqrt(150) ~ 12 + 6/25 ~ 12.24.
+          Exact value: 12.247... The linear interpolation gives an excellent estimate.
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "What is 1/7 as a decimal?"
+        difficulty: easy
+        topics: ["fractions", "mental_math"]
+        hint: "There is a repeating pattern: 142857."
+        solution: |
+          0.142857142857... (repeating block of 6 digits: 142857).
+          Quick trick: 1/7 = 0.142857, 2/7 = 0.285714, 3/7 = 0.428571, etc.
+          Each fraction of 7 is a cyclic permutation of the same 6 digits.
+          Useful related facts: 1/7 ~ 14.3%, 2/7 ~ 28.6%, 3/7 ~ 42.9%.
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "Estimate e^0.1 without a calculator."
+        difficulty: easy
+        topics: ["estimation", "exponential"]
+        hint: "Use the Taylor expansion: e^x ~ 1 + x + x^2/2 for small x."
+        solution: |
+          About 1.105. Using Taylor expansion: e^{0.1} ~ 1 + 0.1 + 0.01/2 + 0.001/6
+          = 1 + 0.1 + 0.005 + 0.000167 ~ 1.1052.
+          Exact value: 1.10517...
+          Useful rule: e^{0.01n} ~ 1.01^n for small n. Also: ln(1+x) ~ x for small x.
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "What is 48 x 52?"
+        difficulty: easy
+        topics: ["multiplication", "mental_math"]
+        hint: "Recognize the difference of squares: (50-2)(50+2)."
+        solution: |
+          2496. Using difference of squares: 48 x 52 = (50-2)(50+2) = 2500 - 4 = 2496.
+          This trick works whenever numbers are equidistant from a round number.
+          Other examples: 47 x 53 = 2500 - 9 = 2491, 45 x 55 = 2500 - 25 = 2475.
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "If a stock drops 20% and then gains 25%, are you back to where you started?"
+        difficulty: easy
+        topics: ["percentage", "mental_math"]
+        hint: "Apply the changes sequentially to $100."
+        solution: |
+          Yes, exactly. Start with $100. After a 20% drop: $100 x 0.80 = $80.
+          After a 25% gain: $80 x 1.25 = $100. Back to the starting point.
+          General rule: a drop of x% requires a gain of x/(1-x/100)% to recover.
+          A 50% drop requires a 100% gain. This asymmetry is important in risk management.
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "Estimate the number of piano tuners in Chicago."
+        difficulty: medium
+        topics: ["fermi_estimation", "order_of_magnitude"]
+        hint: "Start with the population of Chicago, estimate how many pianos, how often they need tuning, how many tunings per tuner per year."
+        solution: |
+          About 200-300 tuners. Population: ~2.7 million. Households: ~1 million.
+          Pianos per household: ~5% have pianos = 50,000 pianos. Plus businesses/schools:
+          maybe 10,000 more. Total: ~60,000 pianos. Tunings per year: ~2 per piano = 120,000.
+          Tunings per tuner per day: ~4, working 250 days = 1,000 per year.
+          Tuners needed: 120,000 / 1,000 = 120. With some slack: 150-250 tuners.
+          The key is structuring the estimation into manageable pieces and checking
+          for reasonableness at each step.
+        programs: ["baruch-mfe", "uchicago-msfm"]
+
+      - question: "Estimate ln(2) and ln(10) from memory. Then compute ln(5)."
+        difficulty: medium
+        topics: ["logarithms", "mental_math"]
+        hint: "ln(2) ~ 0.693, ln(10) ~ 2.303. Use properties of logarithms."
+        solution: |
+          ln(2) ~ 0.693, ln(10) ~ 2.303.
+          ln(5) = ln(10/2) = ln(10) - ln(2) ~ 2.303 - 0.693 = 1.610.
+          Exact: ln(5) = 1.6094...
+          Other useful values: ln(3) ~ 1.099, ln(e) = 1, ln(1+x) ~ x for small x.
+          Rule of 72: doubling time ~ 72 / (rate%). At 8%: 72/8 = 9 years to double.
+          This uses ln(2)/0.08 ~ 0.693/0.08 ~ 8.66 years.
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "What is 999 x 999?"
+        difficulty: easy
+        topics: ["multiplication", "mental_math"]
+        hint: "Write 999 as (1000 - 1)."
+        solution: |
+          998,001. Using the identity: 999^2 = (1000 - 1)^2 = 1,000,000 - 2,000 + 1 = 998,001.
+          Alternatively: 999 x 999 = 999 x 1000 - 999 = 999,000 - 999 = 998,001.
+          General trick: (n-1)^2 = n^2 - 2n + 1, useful for squaring numbers near round values.
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "Approximately how many seconds are in a year?"
+        difficulty: easy
+        topics: ["estimation", "order_of_magnitude"]
+        hint: "There are about 365.25 days in a year, 24 hours in a day, 3600 seconds in an hour."
+        solution: |
+          About 31.5 million (pi x 10^7 is a famous approximation).
+          Exact: 365.25 x 24 x 3600 = 365.25 x 86,400 = 31,557,600.
+          Quick estimate: 365 x 86,400 ~ 400 x 80,000 = 32,000,000.
+          The "pi x 10^7 seconds per year" approximation (31,415,927) is within 0.4% accuracy
+          and is a classic Fermi estimation trick.
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "What is 37 x 27?"
+        difficulty: easy
+        topics: ["multiplication", "mental_math"]
+        hint: "Break it down: 37 x 27 = 37 x 30 - 37 x 3."
+        solution: |
+          999. Method 1: 37 x 27 = 37 x 30 - 37 x 3 = 1,110 - 111 = 999.
+          Method 2: 37 x 27 = (30 + 7)(30 - 3) = 900 - 90 + 210 - 21 = 999.
+          Fun fact: 37 x 3 = 111, and 111 x 9 = 999. The number 37 is a factor of 999 and
+          produces interesting patterns with single-digit multipliers.
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+      - question: "What is the approximate value of 2^10, 2^20, and 2^30?"
+        difficulty: easy
+        topics: ["powers_of_two", "estimation"]
+        hint: "2^10 ~ 10^3. This is the basis for the relationship between binary and decimal."
+        solution: |
+          2^10 = 1,024 ~ 10^3 (one thousand).
+          2^20 = 1,048,576 ~ 10^6 (one million).
+          2^30 = 1,073,741,824 ~ 10^9 (one billion).
+          Rule: 2^10 ~ 10^3, so 2^n ~ 10^{0.3n}.
+          Useful in CS and quant: estimating hash table sizes, data storage, memory requirements.
+          Also: 2^16 = 65,536, 2^32 ~ 4.3 billion, 2^64 ~ 1.8 x 10^19.
+        programs: ["baruch-mfe", "cmu-mscf"]
+
+  - id: baruch_coding
+    name: "Baruch C++ Coding"
+    questions:
+      - question: "Implement matrix multiplication for two dense matrices in C++. What is the time complexity?"
+        difficulty: medium
+        topics: ["cpp", "matrix", "algorithms"]
+        hint: "Standard triple-nested loop. Think about cache efficiency and loop ordering."
+        solution: |
+          vector<vector<double>> matmul(const vector<vector<double>>& A,
+                                        const vector<vector<double>>& B) {
+              int m = A.size(), n = A[0].size(), p = B[0].size();
+              vector<vector<double>> C(m, vector<double>(p, 0.0));
+              for (int i = 0; i < m; ++i)
+                  for (int k = 0; k < n; ++k)         // k before j for cache efficiency
+                      for (int j = 0; j < p; ++j)
+                          C[i][j] += A[i][k] * B[k][j];
+              return C;
+          }
+          Time: O(m*n*p), or O(n^3) for square matrices. The ikj loop order is cache-friendly
+          because C[i][j] and B[k][j] are accessed sequentially in memory (row-major).
+          For production: use BLAS (dgemm) which exploits SIMD, blocking, and parallelism.
+        programs: ["baruch-mfe"]
+
+      - question: "Explain smart pointers in C++ (unique_ptr, shared_ptr, weak_ptr). When do you use each?"
+        difficulty: medium
+        topics: ["cpp", "smart_pointers", "memory_management"]
+        hint: "They automate memory management via RAII. Think about ownership semantics."
+        solution: |
+          unique_ptr: exclusive ownership. Cannot be copied, only moved. Use when exactly one
+          owner is responsible for the resource. Zero overhead over raw pointer. Default choice.
+          shared_ptr: shared ownership via reference counting. The object is deleted when the
+          last shared_ptr is destroyed. Has overhead (atomic ref count). Use sparingly.
+          weak_ptr: non-owning observer of a shared_ptr. Does not affect ref count. Use to
+          break circular references and to check if the object still exists (lock()).
+          Rule of thumb: unique_ptr by default. shared_ptr when ownership is truly shared
+          (rare in well-designed code). weak_ptr for caches and observer patterns.
+          In quant: unique_ptr for pricing engine components, shared_ptr for market data
+          objects shared across multiple models.
+        programs: ["baruch-mfe"]
+
+      - question: "Write a C++ function template that computes the dot product of two vectors. Then specialize it for complex numbers."
+        difficulty: hard
+        topics: ["cpp", "templates", "generic_programming"]
+        hint: "Use a template for the general case. For complex numbers, use std::conj for the Hermitian inner product."
+        solution: |
+          template<typename T>
+          T dot_product(const std::vector<T>& a, const std::vector<T>& b) {
+              T result = T{};
+              for (size_t i = 0; i < a.size(); ++i)
+                  result += a[i] * b[i];
+              return result;
+          }
+          // Specialization for complex: Hermitian inner product <a, b> = sum(conj(a_i) * b_i)
+          template<typename T>
+          std::complex<T> dot_product(const std::vector<std::complex<T>>& a,
+                                      const std::vector<std::complex<T>>& b) {
+              std::complex<T> result{};
+              for (size_t i = 0; i < a.size(); ++i)
+                  result += std::conj(a[i]) * b[i];
+              return result;
+          }
+          Templates enable generic programming -- write once, works for double, float, etc.
+          The complex specialization ensures mathematical correctness of the inner product.
+        programs: ["baruch-mfe"]
+
+      - question: "Implement a simple memory pool allocator in C++ that pre-allocates a fixed block of memory and hands out fixed-size chunks."
+        difficulty: hard
+        topics: ["cpp", "memory_allocation", "performance"]
+        hint: "Pre-allocate a large buffer, maintain a free list (linked list of available chunks)."
+        solution: |
+          class PoolAllocator {
+              struct Block { Block* next; };
+              Block* free_list;
+              std::vector<char> pool;
+              size_t block_size;
+          public:
+              PoolAllocator(size_t bsize, size_t count)
+                  : pool(bsize * count), block_size(bsize), free_list(nullptr) {
+                  for (size_t i = 0; i < count; ++i) {
+                      auto* b = reinterpret_cast<Block*>(&pool[i * bsize]);
+                      b->next = free_list;
+                      free_list = b;
+                  }
+              }
+              void* allocate() {
+                  if (!free_list) throw std::bad_alloc();
+                  Block* b = free_list;
+                  free_list = b->next;
+                  return b;
+              }
+              void deallocate(void* p) {
+                  auto* b = static_cast<Block*>(p);
+                  b->next = free_list;
+                  free_list = b;
+              }
+          };
+          Pool allocators provide O(1) allocation with zero fragmentation. Essential for
+          low-latency trading systems where malloc latency spikes are unacceptable.
+        programs: ["baruch-mfe"]
+
+      - question: "Explain the STL containers (vector, list, map, unordered_map, set). What are their time complexities and when do you use each?"
+        difficulty: medium
+        topics: ["cpp", "stl", "data_structures"]
+        hint: "Think about the underlying data structures and their complexity guarantees."
+        solution: |
+          vector: dynamic array. Access O(1), push_back amortized O(1), insert O(n).
+              Use: default container, cache-friendly, when you need random access.
+          list: doubly linked list. Insert/erase O(1) at iterator, access O(n).
+              Use: frequent insertions/deletions in the middle, no random access needed.
+          map: red-black tree. Insert/find/erase O(log n), ordered keys.
+              Use: need sorted order, range queries. E.g., order book price levels.
+          unordered_map: hash table. Insert/find/erase average O(1), worst O(n).
+              Use: fast lookup, no ordering needed. E.g., symbol-to-data mapping.
+          set: red-black tree of unique keys. Same as map without values.
+              Use: unique sorted elements, set operations.
+          In quant: vector for time series data, unordered_map for ticker lookups,
+          map for order books (sorted by price), set for unique instrument universes.
+        programs: ["baruch-mfe"]
+
+      - question: "Implement a simple observer pattern in C++ where multiple observers subscribe to price updates from a market data feed."
+        difficulty: medium
+        topics: ["cpp", "design_patterns", "observer"]
+        hint: "Use a base class with a virtual update method. The subject maintains a list of observer pointers."
+        solution: |
+          class Observer {
+          public:
+              virtual ~Observer() = default;
+              virtual void on_price_update(const std::string& symbol, double price) = 0;
+          };
+          class MarketFeed {
+              std::vector<Observer*> observers;
+          public:
+              void subscribe(Observer* obs) { observers.push_back(obs); }
+              void publish(const std::string& sym, double px) {
+                  for (auto* obs : observers)
+                      obs->on_price_update(sym, px);
+              }
+          };
+          class Logger : public Observer {
+              void on_price_update(const std::string& sym, double px) override {
+                  std::cout << sym << ": " << px << "\n";
+              }
+          };
+          In production: use weak_ptr to avoid dangling pointers, consider thread safety
+          (lock during publish), and message queues for decoupling.
+        programs: ["baruch-mfe"]
+
+      - question: "Write a C++ function that computes the Black-Scholes price for a European call option."
+        difficulty: medium
+        topics: ["cpp", "black_scholes", "option_pricing"]
+        hint: "Use the BS formula: C = S*N(d1) - K*e^{-rT}*N(d2). You will need a normal CDF approximation."
+        solution: |
+          #include <cmath>
+          double norm_cdf(double x) {
+              return 0.5 * erfc(-x * M_SQRT1_2);  // from <cmath>
+          }
+          double bs_call(double S, double K, double T, double r, double sigma) {
+              double d1 = (log(S/K) + (r + 0.5*sigma*sigma)*T) / (sigma*sqrt(T));
+              double d2 = d1 - sigma*sqrt(T);
+              return S * norm_cdf(d1) - K * exp(-r*T) * norm_cdf(d2);
+          }
+          Key implementation details: use log (not ln) in C++, handle edge cases
+          (T=0, sigma=0), and consider using long double for numerical stability
+          in production code. This is the most commonly asked C++ coding question at Baruch.
+        programs: ["baruch-mfe"]
+
+      - question: "Implement a tridiagonal matrix solver in C++ using the Thomas algorithm."
+        difficulty: hard
+        topics: ["cpp", "numerical_methods", "linear_algebra"]
+        hint: "The Thomas algorithm is a specialized Gaussian elimination for tridiagonal systems. It runs in O(n) time."
+        solution: |
+          // Solves Ax = d where A is tridiagonal with diagonals a (lower), b (main), c (upper)
+          vector<double> thomas(vector<double> a, vector<double> b,
+                                vector<double> c, vector<double> d) {
+              int n = b.size();
+              // Forward sweep
+              for (int i = 1; i < n; ++i) {
+                  double w = a[i] / b[i-1];
+                  b[i] -= w * c[i-1];
+                  d[i] -= w * d[i-1];
+              }
+              // Back substitution
+              vector<double> x(n);
+              x[n-1] = d[n-1] / b[n-1];
+              for (int i = n-2; i >= 0; --i)
+                  x[i] = (d[i] - c[i] * x[i+1]) / b[i];
+              return x;
+          }
+          O(n) time and O(1) extra space. Used in finite-difference PDE solvers for option
+          pricing -- the Crank-Nicolson scheme for Black-Scholes produces a tridiagonal system
+          at each time step.
+        programs: ["baruch-mfe"]
+
+      - question: "What is RAII in C++? Why is it fundamental to writing correct, exception-safe code?"
+        difficulty: medium
+        topics: ["cpp", "raii", "resource_management"]
+        hint: "Resource Acquisition Is Initialization. Resources are acquired in constructors and released in destructors."
+        solution: |
+          RAII (Resource Acquisition Is Initialization): bind the lifetime of a resource
+          (memory, file handle, lock, network connection) to the lifetime of an object.
+          Acquire in the constructor, release in the destructor. Since C++ guarantees
+          destructors run when objects go out of scope (even during stack unwinding from
+          exceptions), resources are always properly released.
+          Examples: (1) std::unique_ptr -- memory management, (2) std::lock_guard -- mutex
+          locking, (3) std::fstream -- file handling, (4) Custom database connection wrapper.
+          Without RAII: manual resource management leads to leaks, double-frees, and
+          exception-unsafe code. RAII is the C++ alternative to garbage collection and
+          try-finally blocks. It is arguably the most important C++ idiom for production code.
+        programs: ["baruch-mfe"]
+
+  - id: baruch_math
+    name: "Baruch Math Interview"
+    questions:
+      - question: "You roll two dice. What is the probability that the sum is 7, given that at least one die shows a 4?"
+        difficulty: medium
+        topics: ["conditional_probability", "dice"]
+        hint: "Carefully enumerate the outcomes where at least one die is 4. Then count those with sum 7."
+        solution: |
+          P(sum=7 | at least one 4). Outcomes with at least one 4: (4,1),(4,2),(4,3),(4,4),(4,5),
+          (4,6),(1,4),(2,4),(3,4),(5,4),(6,4) = 11 outcomes. (Note: (4,4) is counted once.)
+          Of these, sum = 7: (4,3) and (3,4) = 2 outcomes.
+          P = 2/11 ~ 0.182.
+          Common mistake: confusing "at least one 4" (11 outcomes) with "first die is 4"
+          (6 outcomes, P = 1/6).
+        programs: ["baruch-mfe"]
+
+      - question: "Compute the integral of e^(-x^2) from 0 to infinity."
+        difficulty: medium
+        topics: ["integration", "gaussian_integral"]
+        hint: "This is half of the famous Gaussian integral. Use the polar coordinates trick."
+        solution: |
+          sqrt(pi)/2 ~ 0.8862. The full Gaussian integral I = integral_{-inf}^{inf} e^{-x^2} dx.
+          Compute I^2 = integral integral e^{-(x^2+y^2)} dx dy. Switch to polar coordinates:
+          I^2 = integral_0^{2*pi} integral_0^{inf} e^{-r^2} r dr dtheta
+              = 2*pi * [-e^{-r^2}/2]_0^{inf} = 2*pi * 1/2 = pi.
+          So I = sqrt(pi). Since e^{-x^2} is even: integral_0^{inf} = I/2 = sqrt(pi)/2.
+          This integral is fundamental to probability theory (normalizing the Gaussian density).
+        programs: ["baruch-mfe"]
+
+      - question: "A point is chosen uniformly at random inside a unit square. What is the expected distance from the point to the nearest edge?"
+        difficulty: hard
+        topics: ["geometric_probability", "expected_value"]
+        hint: "The distance to the nearest edge is min(x, 1-x, y, 1-y) for a point (x,y) in [0,1]^2."
+        solution: |
+          1/6. By symmetry, consider just one coordinate first. For X ~ Uniform(0,1), the
+          distance to the nearest edge along x is min(X, 1-X). By symmetry of the square,
+          E[min(x, 1-x, y, 1-y)] can be computed using inclusion-exclusion or direct integration.
+          E[min(X, 1-X)] = integral_0^{1/2} x dx + integral_{1/2}^1 (1-x) dx = 1/8 + 1/8 = 1/4.
+          For 2D: E[min distance to edge] = integral_0^1 integral_0^1 min(x,1-x,y,1-y) dx dy = 1/6.
+          The integration splits the square into 4 triangular regions by symmetry.
+        programs: ["baruch-mfe"]
+
+      - question: "What is the sum 1 + 1/2 + 1/4 + 1/8 + ...? What about 1 + 1/2 + 1/3 + 1/4 + ...?"
+        difficulty: easy
+        topics: ["series", "convergence"]
+        hint: "One is a geometric series, the other is the harmonic series."
+        solution: |
+          Geometric series: 1 + 1/2 + 1/4 + ... = sum_{k=0}^{inf} (1/2)^k = 1/(1-1/2) = 2.
+          Converges because common ratio |r| = 1/2 < 1.
+          Harmonic series: 1 + 1/2 + 1/3 + 1/4 + ... diverges to infinity.
+          Proof: group terms: (1) + (1/2) + (1/3 + 1/4) + (1/5+...+1/8) + ...
+          Each group >= 1/2, and there are infinitely many groups.
+          The harmonic series grows as ln(n) + gamma (Euler-Mascheroni constant gamma ~ 0.577).
+          Knowing which series converge is fundamental to analysis and probability.
+        programs: ["baruch-mfe"]
+
+      - question: "Estimate the probability that a standard normal random variable exceeds 2. Then estimate P(Z > 3)."
+        difficulty: medium
+        topics: ["normal_distribution", "estimation"]
+        hint: "Memorize key tail probabilities: P(Z > 1) ~ 16%, P(Z > 2) ~ 2.3%, P(Z > 3) ~ 0.13%."
+        solution: |
+          P(Z > 2) ~ 2.28% (or about 1 in 44).
+          P(Z > 3) ~ 0.135% (or about 1 in 741).
+          Key values to memorize:
+          P(Z > 1) ~ 15.87% (68-95-99.7 rule: ~16%)
+          P(Z > 2) ~ 2.28% (95% within 2 sigma -> 2.5% in each tail)
+          P(Z > 3) ~ 0.135% (99.7% within 3 sigma -> 0.15% in each tail)
+          These are used constantly in risk management: a 3-sigma event should happen about
+          once in 741 observations (~3 per year for daily data). In reality, financial returns
+          have fatter tails, so extreme events occur more frequently than the normal predicts.
+        programs: ["baruch-mfe"]
+
+      - question: "Compute the derivative of x^x for x > 0."
+        difficulty: medium
+        topics: ["calculus", "logarithmic_differentiation"]
+        hint: "Write x^x = e^{x*ln(x)} and use the chain rule."
+        solution: |
+          d/dx(x^x) = x^x * (ln(x) + 1).
+          Method: let y = x^x. Take ln: ln(y) = x*ln(x).
+          Differentiate implicitly: y'/y = ln(x) + x*(1/x) = ln(x) + 1.
+          So y' = y * (ln(x) + 1) = x^x * (ln(x) + 1).
+          This technique (logarithmic differentiation) is useful whenever the variable
+          appears in both the base and exponent.
+        programs: ["baruch-mfe"]
+
+      - question: "Three people each pick a real number uniformly from [0, 1]. What is the probability that the sum is less than 1?"
+        difficulty: medium
+        topics: ["geometric_probability", "volume"]
+        hint: "The sample space is the unit cube [0,1]^3. What fraction of the cube satisfies x + y + z < 1?"
+        solution: |
+          1/6. The region {(x,y,z) : x,y,z >= 0, x+y+z <= 1} is a tetrahedron inside the
+          unit cube. Its volume = (1/3) * base_area * height = (1/3) * (1/2) * 1 = 1/6.
+          Alternatively: volume of the standard simplex in n dimensions = 1/n!.
+          For n=3: 1/3! = 1/6.
+          Generalization: for n people, P(sum < 1) = 1/n!.
+          For n=2: P(X+Y < 1) = 1/2 (triangle in the unit square).
+        programs: ["baruch-mfe"]
+
+      - question: "Is the function f(x) = x*sin(1/x) continuous at x = 0 (defining f(0) = 0)? Is it differentiable?"
+        difficulty: hard
+        topics: ["analysis", "continuity", "differentiability"]
+        hint: "For continuity, use the squeeze theorem. For differentiability, check the limit definition of the derivative."
+        solution: |
+          Continuous: yes. |x*sin(1/x)| <= |x| -> 0 as x -> 0 (squeeze theorem).
+          Differentiable: no. f'(0) = lim_{h->0} h*sin(1/h)/h = lim_{h->0} sin(1/h),
+          which does not exist (oscillates between -1 and 1).
+          This is a classic example showing that continuity does not imply differentiability.
+          Compare with g(x) = x^2*sin(1/x), which IS differentiable at 0 (g'(0) = 0)
+          because the x^2 damps the oscillation fast enough.
+        programs: ["baruch-mfe"]
+
+      - question: "What is the Taylor expansion of e^x around x = 0? Use it to show that e is irrational."
+        difficulty: hard
+        topics: ["series", "proof", "analysis"]
+        hint: "e^x = sum x^n/n!. Assume e = p/q is rational and derive a contradiction."
+        solution: |
+          Taylor expansion: e^x = sum_{n=0}^{inf} x^n / n! = 1 + x + x^2/2! + x^3/3! + ...
+          Proof e is irrational: assume e = p/q. Then q! * e = q! * p/q = integer.
+          But q! * e = q! * sum_{n=0}^{inf} 1/n! = sum_{n=0}^q q!/n! + sum_{n=q+1}^{inf} q!/n!.
+          The first sum is an integer. The second sum = 1/(q+1) + 1/((q+1)(q+2)) + ... < 1/(q+1) * 1/(1-1/(q+2)).
+          This is a positive number less than 1, so q!*e is not an integer. Contradiction.
+          This proof technique is elegant and uses only basic analysis concepts.
+        programs: ["baruch-mfe"]
+
+      - question: "You pick a random chord on a circle. What is the probability it is longer than the side of an inscribed equilateral triangle?"
+        difficulty: hard
+        topics: ["geometric_probability", "bertrand_paradox"]
+        hint: "This is Bertrand's paradox. The answer depends on how you define 'random chord'."
+        solution: |
+          This is Bertrand's paradox -- the answer depends on the method of selecting a random chord:
+          Method 1 (random endpoints): Fix one endpoint, choose the other uniformly on the circle.
+          The chord exceeds the triangle side when the second endpoint falls in the middle 1/3
+          of the circle. P = 1/3.
+          Method 2 (random midpoint): Choose the chord's midpoint uniformly in the disk.
+          The chord is long enough iff the midpoint is within a concentric circle of radius r/2.
+          P = (r/2)^2 / r^2 = 1/4.
+          Method 3 (random radius): Fix a radius, choose a point uniformly on it as the chord's
+          midpoint. P = 1/2.
+          The paradox shows that "uniform random" is ambiguous without specifying the probability
+          space. In finance, this is analogous to model specification -- results depend on assumptions.
+        programs: ["baruch-mfe"]

@@ -86,21 +86,11 @@ def normalize_gpa(gpa: float, scale: float) -> float:
         # Unknown scale — attempt linear conversion
         return min(4.0, gpa * 4.0 / scale)
 
-    for threshold, mapped_lo, mapped_hi in breakpoints:
+    for idx, (threshold, mapped_lo, mapped_hi) in enumerate(breakpoints):
         if gpa >= threshold:
-            # Find the top of this segment
-            # For the highest segment, cap at max GPA
-            seg_top = scale if breakpoints[0] == (threshold, mapped_lo, mapped_hi) else threshold
-            # Use previous segment's threshold as the top
-            idx = breakpoints.index((threshold, mapped_lo, mapped_hi))
-            if idx == 0:
-                seg_top = scale
-            else:
-                seg_top = breakpoints[idx - 1][0]
-
+            seg_top = scale if idx == 0 else breakpoints[idx - 1][0]
             if seg_top == threshold:
                 return mapped_hi
-
             frac = (gpa - threshold) / (seg_top - threshold)
             return mapped_lo + frac * (mapped_hi - mapped_lo)
 
@@ -239,17 +229,12 @@ def score_internships(intern_desc: str) -> float:
     desc = intern_desc.lower()
     score = 0.0
 
-    # Count internships (Chinese: 段)
-    for char in "段":
-        count = desc.count(char)
-        if count > 0:
-            # Extract number before 段
-            for i, c in enumerate(desc):
-                if c == "段":
-                    if i > 0 and desc[i - 1].isdigit():
-                        n = int(desc[i - 1])
-                        score += min(n * 1.5, 5.0)
-                        break
+    # Count internships (Chinese: N段)
+    for i, c in enumerate(desc):
+        if c == "段" and i > 0 and desc[i - 1].isdigit():
+            n = int(desc[i - 1])
+            score += min(n * 1.5, 5.0)
+            break
 
     # Quality keywords (Chinese + English)
     quality_keywords = {
@@ -452,6 +437,49 @@ def load_all_admission_data() -> list[AdmissionRecord]:
             continue
         all_records.extend(load_admission_csv(csv_path))
     return all_records
+
+
+def validate_records(
+    records: list[AdmissionRecord],
+) -> list[str]:
+    """Check loaded records for consistency issues.
+
+    Returns a list of warning strings (empty = all OK).
+    """
+    warnings: list[str] = []
+
+    # Check that same ID has consistent personal attributes.
+    by_id: dict[str, AdmissionRecord] = {}
+    for r in records:
+        if not r.id:
+            continue
+        if r.id in by_id:
+            ref = by_id[r.id]
+            if abs(r.gpa_raw - ref.gpa_raw) > 0.01:
+                warnings.append(
+                    f"ID {r.id}: inconsistent GPA "
+                    f"({r.gpa_raw} vs {ref.gpa_raw})"
+                )
+            if r.bg_type and ref.bg_type and r.bg_type != ref.bg_type:
+                warnings.append(
+                    f"ID {r.id}: inconsistent bg_type "
+                    f"({r.bg_type} vs {ref.bg_type})"
+                )
+        else:
+            by_id[r.id] = r
+
+    # Range checks.
+    for r in records:
+        if r.gpa_normalized > 4.0:
+            warnings.append(
+                f"ID {r.id}: normalized GPA {r.gpa_normalized:.2f} > 4.0"
+            )
+        if r.gre is not None and (r.gre < 260 or r.gre > 340):
+            warnings.append(
+                f"ID {r.id}: GRE {r.gre} outside valid range 260-340"
+            )
+
+    return warnings
 
 
 # ---------------------------------------------------------------------------

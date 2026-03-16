@@ -10,6 +10,7 @@ from rich.text import Text
 
 from core.admission_data import load_admission_csv, load_all_admission_data, summarize_records
 from core.calibrator import calibrate_all, generate_ranker_overrides
+from core.course_optimizer import optimize_courses
 from core.data_loader import load_all_programs, load_profile
 from core.gap_advisor import analyze_gaps
 from core.interview_prep import (
@@ -19,8 +20,10 @@ from core.interview_prep import (
     get_random_quiz,
     load_questions,
 )
+from core.list_builder import build_school_list
 from core.prerequisite_matcher import match_prerequisites
 from core.profile_evaluator import evaluate as evaluate_profile
+from core.roi_calculator import calculate_roi
 from core.school_ranker import rank_schools
 from core.test_requirements import check_gre, check_toefl
 from core.timeline_generator import generate_timeline
@@ -39,6 +42,24 @@ def cmd_evaluate(args: argparse.Namespace) -> None:
     profile = load_profile(args.profile)
     programs = load_all_programs()
     result = evaluate_profile(profile)
+
+    # PDF output path requested
+    output_path = getattr(args, "output", None)
+    if output_path and output_path.endswith(".pdf"):
+        rankings = rank_schools(profile, programs, result)
+        gap_recs = analyze_gaps(result.gaps) if result.gaps else []
+
+        from core.report_generator import generate_report
+
+        path = generate_report(
+            profile=profile,
+            evaluation=result,
+            rankings=rankings,
+            gaps=gap_recs,
+            output_path=output_path,
+        )
+        console.print(f"[green]PDF report saved to:[/green] {path}")
+        return
 
     # Header
     console.print()
@@ -538,6 +559,191 @@ def cmd_interview(args: argparse.Namespace) -> None:
     console.print()
 
 
+def cmd_list(args: argparse.Namespace) -> None:
+    """Build and display an optimised school application list."""
+    profile = load_profile(args.profile)
+    programs = load_all_programs()
+    evaluation = evaluate_profile(profile)
+    school_list = build_school_list(profile, programs, evaluation)
+
+    console.print()
+    console.print(
+        Panel(
+            f"[bold]Application List[/bold] for {profile.name}",
+            border_style="cyan",
+        )
+    )
+
+    # One table per category.
+    for label, entries, style in [
+        ("Reach", school_list.reach, "red"),
+        ("Target", school_list.target, "yellow"),
+        ("Safety", school_list.safety, "green"),
+    ]:
+        if not entries:
+            continue
+        table = Table(
+            title=f"[bold {style}]{label} Schools[/bold {style}]",
+            border_style=style,
+            show_lines=True,
+        )
+        table.add_column("Program", style="bold", min_width=20)
+        table.add_column("University", min_width=18)
+        table.add_column("Fit", justify="right", width=6)
+        table.add_column("Prereq", justify="right", width=7)
+        table.add_column("Reason", min_width=30)
+
+        for e in entries:
+            table.add_row(
+                e.name,
+                e.university,
+                f"{e.fit_score:.1f}",
+                f"{e.prereq_match_score:.0%}",
+                e.reason,
+            )
+        console.print(table)
+        console.print()
+
+    # Summary footer.
+    console.print(
+        f"  [bold]Total application fees:[/bold] ${school_list.total_application_fees:,}"
+    )
+    console.print(f"  [dim]{school_list.summary}[/dim]")
+    console.print()
+
+
+def cmd_roi(args: argparse.Namespace) -> None:
+    """Display ROI analysis for all MFE programs."""
+    programs = load_all_programs()
+    results = calculate_roi(
+        programs,
+        opportunity_cost_salary=args.opportunity_cost,
+        discount_rate=args.discount_rate,
+    )
+
+    if not results:
+        console.print("[yellow]No programs with both tuition and salary data found.[/yellow]")
+        return
+
+    console.print()
+    table = Table(title="MFE Program ROI Analysis", border_style="cyan", show_lines=True)
+    table.add_column("Program", style="bold", min_width=16)
+    table.add_column("Tuition", justify="right")
+    table.add_column("Living Cost", justify="right")
+    table.add_column("Total Cost", justify="right")
+    table.add_column("Avg Salary", justify="right")
+    table.add_column("Payback (yrs)", justify="right")
+    table.add_column("5yr NPV", justify="right")
+    table.add_column("Risk-Adj ROI", justify="right")
+
+    for r in results:
+        # Color-code NPV
+        if r.npv_5yr >= 0:
+            npv_str = f"[green]${r.npv_5yr:,.0f}[/green]"
+        else:
+            npv_str = f"[red]${r.npv_5yr:,.0f}[/red]"
+
+        # Color-code ROI
+        if r.risk_adjusted_roi >= 100:
+            roi_str = f"[green]{r.risk_adjusted_roi:.0f}%[/green]"
+        elif r.risk_adjusted_roi >= 0:
+            roi_str = f"[yellow]{r.risk_adjusted_roi:.0f}%[/yellow]"
+        else:
+            roi_str = f"[red]{r.risk_adjusted_roi:.0f}%[/red]"
+
+        # Payback years
+        if r.payback_years == float("inf"):
+            payback_str = "[red]N/A[/red]"
+        else:
+            payback_str = f"{r.payback_years:.1f}"
+
+        table.add_row(
+            f"{r.program_name}\n[dim]{r.university}[/dim]",
+            f"${r.tuition:,}",
+            f"${r.living_cost_total:,}",
+            f"${r.total_cost:,}",
+            f"${r.avg_salary:,}",
+            payback_str,
+            npv_str,
+            roi_str,
+        )
+
+    console.print(table)
+    console.print()
+    console.print(
+        f"  [dim]Assumptions: opportunity cost salary = ${args.opportunity_cost:,}, "
+        f"discount rate = {args.discount_rate:.0%}, "
+        f"program duration = 18 months[/dim]"
+    )
+    console.print()
+
+
+def cmd_optimize(args: argparse.Namespace) -> None:
+    """Recommend courses to maximize profile improvement."""
+    profile = load_profile(args.profile)
+    programs = load_all_programs()
+    recommendations = optimize_courses(profile, programs, max_courses=args.max_courses)
+
+    console.print()
+    console.print(
+        Panel(
+            f"[bold]Course Optimizer[/bold] for {profile.name}\n"
+            f"Top {args.max_courses} courses to maximize your profile score",
+            border_style="cyan",
+        )
+    )
+
+    if not recommendations:
+        console.print(
+            "  [bold green]No course recommendations -- your profile"
+            " is strong across all dimensions![/bold green]"
+        )
+        console.print()
+        return
+
+    table = Table(border_style="cyan", show_lines=True)
+    table.add_column("#", justify="right", width=3)
+    table.add_column("Course Category", style="bold", min_width=22)
+    table.add_column("Dimension", width=14)
+    table.add_column("Impact", justify="right", width=8)
+    table.add_column("Prereq", justify="right", width=7)
+    table.add_column("Why", min_width=40)
+
+    for idx, rec in enumerate(recommendations, 1):
+        # Color-code impact score
+        if rec.impact_score >= 1.0:
+            impact_str = f"[red]{rec.impact_score:.2f}[/red]"
+        elif rec.impact_score >= 0.5:
+            impact_str = f"[yellow]{rec.impact_score:.2f}[/yellow]"
+        else:
+            impact_str = f"[cyan]{rec.impact_score:.2f}[/cyan]"
+
+        prereq_str = (
+            f"[red]{rec.prereq_coverage}[/red]"
+            if rec.prereq_coverage > 0
+            else "[dim]0[/dim]"
+        )
+
+        category_label = rec.category.replace("_", " ").title()
+
+        table.add_row(
+            str(idx),
+            category_label,
+            rec.dimension.replace("_", "/").title(),
+            impact_str,
+            prereq_str,
+            rec.reason,
+        )
+
+    console.print(table)
+    console.print()
+    console.print(
+        "  [dim]Impact = dimension_weight * factor_weight * gap_to_9.0"
+        " + prereq_bonus (0.5 per program)[/dim]"
+    )
+    console.print()
+
+
 def cmd_gaps(args: argparse.Namespace) -> None:
     """Analyze profile gaps and suggest improvements."""
     profile = load_profile(args.profile)
@@ -807,6 +1013,11 @@ def main() -> None:
     # evaluate
     p_eval = subparsers.add_parser("evaluate", help="Evaluate your profile")
     p_eval.add_argument("--profile", "-p", required=True, help="Path to profile YAML")
+    p_eval.add_argument(
+        "--output",
+        "-o",
+        help="Output file path (use .pdf extension for PDF report)",
+    )
 
     # match
     p_match = subparsers.add_parser("match", help="Match prerequisites")
@@ -858,6 +1069,21 @@ def main() -> None:
         help="List all available question categories and exit",
     )
 
+    # roi
+    p_roi = subparsers.add_parser("roi", help="ROI analysis for MFE programs")
+    p_roi.add_argument(
+        "--opportunity-cost",
+        type=int,
+        default=65000,
+        help="Annual opportunity cost salary (default: $65,000)",
+    )
+    p_roi.add_argument(
+        "--discount-rate",
+        type=float,
+        default=0.05,
+        help="Discount rate for NPV (default: 0.05)",
+    )
+
     # gaps
     p_gaps = subparsers.add_parser("gaps", help="Analyze profile gaps and suggest improvements")
     p_gaps.add_argument("--profile", "-p", required=True, help="Path to profile YAML")
@@ -873,6 +1099,22 @@ def main() -> None:
         "--apply", action="store_true", help="Show ranker overrides that would be applied"
     )
 
+    # optimize
+    p_optimize = subparsers.add_parser(
+        "optimize", help="Recommend courses to maximize profile improvement"
+    )
+    p_optimize.add_argument("--profile", "-p", required=True, help="Path to profile YAML")
+    p_optimize.add_argument(
+        "--max-courses",
+        type=int,
+        default=3,
+        help="Maximum number of courses to recommend (default: 3)",
+    )
+
+    # list
+    p_list = subparsers.add_parser("list", help="Build optimised school application list")
+    p_list.add_argument("--profile", "-p", required=True, help="Path to profile YAML")
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -887,9 +1129,12 @@ def main() -> None:
         "programs": cmd_programs,
         "compare": cmd_compare,
         "interview": cmd_interview,
+        "roi": cmd_roi,
         "gaps": cmd_gaps,
         "stats": cmd_stats,
         "calibrate": cmd_calibrate,
+        "optimize": cmd_optimize,
+        "list": cmd_list,
     }
     commands[args.command](args)
 

@@ -13,6 +13,7 @@ from pathlib import Path
 
 import plotly.graph_objects as go
 import streamlit as st
+import yaml
 
 # ---------------------------------------------------------------------------
 # Ensure the package root is importable regardless of working directory.
@@ -23,6 +24,7 @@ if str(_PACKAGE_ROOT) not in sys.path:
 
 from core.data_loader import load_all_programs, load_profile  # noqa: E402
 from core.gap_advisor import analyze_gaps  # noqa: E402
+from core.models import CourseCategory  # noqa: E402
 from core.profile_evaluator import evaluate as evaluate_profile  # noqa: E402
 from core.school_ranker import rank_schools  # noqa: E402
 from core.timeline_generator import generate_timeline  # noqa: E402
@@ -42,6 +44,7 @@ st.set_page_config(
 SAMPLE_PROFILE_PATH = _PACKAGE_ROOT / "examples" / "sample_profile.yaml"
 
 PAGES = [
+    "Profile Builder",
     "Profile Evaluation",
     "Program Explorer",
     "Program Comparison",
@@ -138,6 +141,247 @@ _PRIORITY_COLORS = {
     "Medium": "#e67e22",
     "Low": "#3498db",
 }
+
+
+# ===================================================================
+# Page 0: Profile Builder
+# ===================================================================
+
+# Category groupings by subject area (values match CourseCategory enum)
+_CATEGORY_GROUPS: dict[str, list[str]] = {
+    "Math": [
+        "calculus", "linear_algebra", "probability", "ode", "pde",
+        "real_analysis", "numerical_analysis", "stochastic_processes",
+        "stochastic_calculus", "optimization",
+    ],
+    "Statistics": [
+        "statistics", "regression", "econometrics", "time_series",
+        "stat_computing", "stat_learning", "bayesian",
+    ],
+    "Computer Science": [
+        "programming_cpp", "programming_python", "programming_r",
+        "data_structures", "algorithms", "machine_learning",
+        "database", "software_engineering",
+    ],
+    "Finance & Economics": [
+        "finance", "derivatives", "fixed_income", "portfolio_theory",
+        "microeconomics", "macroeconomics", "game_theory",
+        "risk_management", "financial_econometrics", "accounting",
+    ],
+}
+
+
+def page_profile_builder() -> None:
+    from core.models import Course, TestScores, UserProfile
+
+    st.header("Profile Builder")
+    st.caption(
+        "Build your applicant profile interactively. "
+        "When finished, click **Build Profile** to load it into the evaluation engine, "
+        "or **Download YAML** to save it to a file."
+    )
+
+    # ── 1. Personal Information ───────────────────────────────────────
+    with st.expander("Personal Information", expanded=True):
+        pb_name = st.text_input("Name", key="pb_name")
+        pb_university = st.text_input("University", key="pb_university")
+        pb_majors_raw = st.text_input(
+            "Majors (comma-separated)",
+            key="pb_majors",
+            placeholder="e.g. Applied Mathematics, Economics",
+        )
+        pb_gpa = st.number_input(
+            "GPA", min_value=0.0, max_value=4.0, value=0.0, step=0.01, key="pb_gpa",
+        )
+        pb_international = st.checkbox("International student", key="pb_international")
+        pb_years_us = 0
+        if pb_international:
+            pb_years_us = st.number_input(
+                "Years at US institution",
+                min_value=0, max_value=10, value=0, step=1, key="pb_years_us",
+            )
+
+    # ── 2. Test Scores ────────────────────────────────────────────────
+    with st.expander("Test Scores"):
+        pb_gre_q = st.number_input(
+            "GRE Quant (leave 0 if not taken)",
+            min_value=0, max_value=170, value=0, step=1, key="pb_gre_q",
+        )
+        pb_gre_v = st.number_input(
+            "GRE Verbal (leave 0 if not taken)",
+            min_value=0, max_value=170, value=0, step=1, key="pb_gre_v",
+        )
+        pb_toefl = st.number_input(
+            "TOEFL iBT (leave 0 if not taken)",
+            min_value=0, max_value=120, value=0, step=1, key="pb_toefl",
+        )
+
+    # ── 3. Coursework ─────────────────────────────────────────────────
+    with st.expander("Coursework"):
+        # Subject area helper
+        subject_area = st.selectbox(
+            "Subject Area (reference guide)",
+            options=["-- select --"] + list(_CATEGORY_GROUPS.keys()),
+            key="pb_subject_area",
+        )
+        if subject_area != "-- select --":
+            cats = _CATEGORY_GROUPS[subject_area]
+            st.caption(
+                f"Categories for **{subject_area}**: "
+                + ", ".join(c.replace("_", " ").title() for c in cats)
+            )
+
+        all_category_values = [e.value for e in CourseCategory]
+        grade_options = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C"]
+        level_options = [100, 200, 300, 400, 500]
+
+        course_data = st.data_editor(
+            [
+                {
+                    "name": "", "code": "", "category": "other",
+                    "grade": "A", "level": 300, "credits": 3.0,
+                }
+                for _ in range(3)
+            ],
+            column_config={
+                "name": st.column_config.TextColumn("Name"),
+                "code": st.column_config.TextColumn("Code"),
+                "category": st.column_config.SelectboxColumn(
+                    "Category", options=all_category_values,
+                ),
+                "grade": st.column_config.SelectboxColumn(
+                    "Grade", options=grade_options,
+                ),
+                "level": st.column_config.SelectboxColumn(
+                    "Level", options=level_options,
+                ),
+                "credits": st.column_config.NumberColumn(
+                    "Credits", min_value=0.0, max_value=6.0, step=0.5, default=3.0,
+                ),
+            },
+            num_rows="dynamic",
+            use_container_width=True,
+            key="pb_courses",
+        )
+
+    # ── 4. Experience & Projects ──────────────────────────────────────
+    with st.expander("Experience & Projects"):
+        st.markdown("**Work Experience**")
+        experience_data = st.data_editor(
+            [
+                {"type": "", "title": "", "company": "", "description": "", "duration_months": 0}
+            ],
+            column_config={
+                "type": st.column_config.TextColumn("Type"),
+                "title": st.column_config.TextColumn("Title"),
+                "company": st.column_config.TextColumn("Company"),
+                "description": st.column_config.TextColumn("Description"),
+                "duration_months": st.column_config.NumberColumn(
+                    "Duration (months)", min_value=0, step=1,
+                ),
+            },
+            num_rows="dynamic",
+            use_container_width=True,
+            key="pb_experience",
+        )
+
+        st.markdown("**Projects**")
+        project_data = st.data_editor(
+            [
+                {"name": "", "description": ""}
+            ],
+            column_config={
+                "name": st.column_config.TextColumn("Name"),
+                "description": st.column_config.TextColumn("Description"),
+            },
+            num_rows="dynamic",
+            use_container_width=True,
+            key="pb_projects",
+        )
+
+    # ── Action buttons ────────────────────────────────────────────────
+    st.divider()
+    col_build, col_download = st.columns(2)
+
+    with col_build:
+        if st.button("Build Profile", type="primary", use_container_width=True):
+            # Parse majors
+            majors = [m.strip() for m in pb_majors_raw.split(",") if m.strip()]
+
+            # Parse test scores (treat 0 as not provided)
+            test_scores = TestScores(
+                gre_quant=pb_gre_q if pb_gre_q >= 130 else None,
+                gre_verbal=pb_gre_v if pb_gre_v >= 130 else None,
+                toefl=pb_toefl if pb_toefl > 0 else None,
+            )
+
+            # Parse courses (skip empty rows)
+            courses: list[Course] = []
+            for row in course_data:
+                if row.get("name", "").strip() or row.get("code", "").strip():
+                    courses.append(Course(
+                        name=row.get("name", ""),
+                        code=row.get("code", ""),
+                        category=row.get("category", "other"),
+                        grade=row.get("grade", "A"),
+                        credits=float(row.get("credits", 3.0)),
+                        level=int(row.get("level", 300)),
+                    ))
+
+            # Parse experience (skip empty rows)
+            experience = [
+                {k: v for k, v in row.items()}
+                for row in experience_data
+                if row.get("title", "").strip()
+            ]
+
+            # Parse projects (skip empty rows)
+            projects = [
+                {k: v for k, v in row.items()}
+                for row in project_data
+                if row.get("name", "").strip()
+            ]
+
+            profile = UserProfile(
+                name=pb_name,
+                university=pb_university,
+                majors=majors,
+                gpa=pb_gpa,
+                test_scores=test_scores,
+                coursework=courses,
+                work_experience=experience,
+                projects=projects,
+                is_international=pb_international,
+                years_at_us_institution=pb_years_us,
+            )
+            st.session_state["profile"] = profile
+            st.success(
+                f"Profile built for **{profile.name or 'Unnamed'}** with "
+                f"{len(courses)} courses, {len(experience)} experiences, "
+                f"and {len(projects)} projects. "
+                "Navigate to **Profile Evaluation** to see your results."
+            )
+
+    with col_download:
+        profile = _get_profile()
+        if profile is not None:
+            yaml_str = yaml.dump(
+                profile.to_dict(), default_flow_style=False, sort_keys=False,
+            )
+            st.download_button(
+                label="Download YAML",
+                data=yaml_str,
+                file_name="quantpath_profile.yaml",
+                mime="text/yaml",
+                use_container_width=True,
+            )
+        else:
+            st.button(
+                "Download YAML",
+                disabled=True,
+                use_container_width=True,
+                help="Build a profile first before downloading.",
+            )
 
 
 # ===================================================================
@@ -644,7 +888,9 @@ def page_application_timeline() -> None:
 # Page router
 # ===================================================================
 
-if page == "Profile Evaluation":
+if page == "Profile Builder":
+    page_profile_builder()
+elif page == "Profile Evaluation":
     page_profile_evaluation()
 elif page == "Program Explorer":
     page_program_explorer()

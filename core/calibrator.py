@@ -18,6 +18,7 @@ from .admission_data import (
     AdmissionRecord,
     ProgramStats,
     compute_all_program_stats,
+    compute_program_stats,
 )
 
 # ---------------------------------------------------------------------------
@@ -152,8 +153,8 @@ def calibrate_all(
     # Global feature weights (average across programs with enough data)
     global_weights = _compute_global_weights(program_thresholds)
 
-    # Accuracy of current classification
-    accuracy = _evaluate_accuracy(records, program_thresholds)
+    # Accuracy via leave-one-out cross-validation (no data leakage)
+    accuracy = _evaluate_accuracy_cv(records)
 
     # Recommendations
     recommendations = _generate_recommendations(
@@ -198,69 +199,100 @@ def _compute_global_weights(
 # ---------------------------------------------------------------------------
 
 
+_DEFAULT_WEIGHTS: dict[str, float] = {
+    "gpa": 0.35,
+    "bg_tier": 0.20,
+    "intern": 0.20,
+    "research": 0.10,
+    "paper": 0.05,
+    "gender_f": 0.05,
+    "domestic": 0.05,
+}
+
+
+def _get_prediction_weights(
+    threshold: ProgramThreshold,
+) -> dict[str, float]:
+    """Return feature weights — learned if available, else defaults.
+
+    If the program has calibrated feature_weights (from effect size
+    analysis), normalize them to sum to 1.0 and use those.  Otherwise
+    fall back to ``_DEFAULT_WEIGHTS``.
+    """
+    fw = threshold.feature_weights
+    if fw and threshold.confidence in ("medium", "high"):
+        raw = {k: abs(v) for k, v in fw.items()}
+        total = sum(raw.values()) or 1.0
+        return {k: v / total for k, v in raw.items()}
+    return dict(_DEFAULT_WEIGHTS)
+
+
 def predict_outcome(
     record: AdmissionRecord,
     threshold: ProgramThreshold,
 ) -> str:
     """Predict admission outcome based on calibrated thresholds.
 
+    Uses learned feature weights when available (medium/high
+    confidence), otherwise falls back to default weights.
+
     Returns 'accepted', 'rejected', or 'borderline'.
     """
+    weights = _get_prediction_weights(threshold)
     score = 0.0
     max_score = 0.0
 
-    # GPA component (35%)
-    weight_gpa = 0.35
-    max_score += weight_gpa
+    # GPA component
+    w = weights.get("gpa", 0.35)
+    max_score += w
     if threshold.gpa_target > 0:
         gpa_ratio = record.gpa_normalized / threshold.gpa_target
-        score += weight_gpa * min(1.0, gpa_ratio)
+        score += w * min(1.0, gpa_ratio)
 
-    # Background tier (20%)
-    weight_bg = 0.20
-    max_score += weight_bg
-    if threshold.max_bg_tier_accepted > 0:
-        bg_ratio = 1.0 - (record.bg_tier - 1) / 4.0  # tier 1=1.0, tier 5=0.0
-        score += weight_bg * max(0.0, bg_ratio)
+    # Background tier (lower tier = better)
+    w = weights.get("bg_tier", 0.20)
+    max_score += w
+    bg_ratio = 1.0 - (record.bg_tier - 1) / 4.0
+    score += w * max(0.0, bg_ratio)
 
-    # Intern score (18%)
-    weight_intern = 0.18
-    max_score += weight_intern
+    # Intern score
+    w = weights.get("intern", 0.20)
+    max_score += w
     if record.intern_score > 0:
-        score += weight_intern * min(1.0, record.intern_score / 8.0)
+        score += w * min(1.0, record.intern_score / 8.0)
 
-    # Research/paper bonus (12%)
-    weight_research = 0.12
-    max_score += weight_research
-    bonus = 0.0
-    if record.has_paper:
-        bonus += 0.5
+    # Research bonus
+    w = weights.get("research", 0.10)
+    max_score += w
     if record.has_research:
-        bonus += 0.5
-    score += weight_research * bonus
+        score += w * 1.0
 
-    # Gender diversity bonus (7%)
-    # MFE programs skew heavily male; female applicants may benefit
-    weight_gender = 0.07
-    max_score += weight_gender
+    # Paper bonus
+    w = weights.get("paper", 0.05)
+    max_score += w
+    if record.has_paper:
+        score += w * 1.0
+
+    # Gender (small factor)
+    w = weights.get("gender_f", 0.05)
+    max_score += w
     if record.gender == "F":
-        score += weight_gender * 1.0
+        score += w * 1.0
     elif record.gender == "M":
-        score += weight_gender * 0.4  # baseline, no penalty
+        score += w * 0.5
 
-    # Nationality / domestic advantage (8%)
-    # Domestic applicants (US citizens/PR) have slight advantage
-    weight_nat = 0.08
-    max_score += weight_nat
+    # Domestic advantage (small factor)
+    w = weights.get("domestic", 0.05)
+    max_score += w
     nat = record.nationality_canonical
     if nat == "domestic":
-        score += weight_nat * 1.0
+        score += w * 1.0
     elif nat == "hk_tw":
-        score += weight_nat * 0.6
+        score += w * 0.7
     elif nat == "china":
-        score += weight_nat * 0.4  # largest applicant pool, most competitive
+        score += w * 0.5
     else:
-        score += weight_nat * 0.5
+        score += w * 0.6
 
     # Classify based on score ratio
     ratio = score / max_score if max_score > 0 else 0.0
@@ -279,54 +311,72 @@ def predict_outcome(
     return "rejected"
 
 
-def _evaluate_accuracy(
+def _evaluate_accuracy_cv(
     records: list[AdmissionRecord],
-    thresholds: dict[str, ProgramThreshold],
 ) -> dict[str, Any]:
-    """Evaluate prediction accuracy against actual outcomes."""
+    """Evaluate accuracy via leave-one-out cross-validation.
+
+    For each record, calibrate on all OTHER records, then predict
+    the held-out record.  This prevents train/test data leakage.
+    """
     results: dict[str, Any] = {
         "total_predictions": 0,
         "correct": 0,
         "incorrect": 0,
         "borderline": 0,
         "per_program": {},
+        "method": "leave-one-out CV",
     }
 
-    for record in records:
-        if record.program not in thresholds:
-            continue
-        if record.result == "waitlisted":
+    decidable = [r for r in records if r.result in ("accepted", "rejected")]
+
+    for i, held_out in enumerate(decidable):
+        # Train on everything except the held-out record.
+        train = [r for j, r in enumerate(decidable) if j != i]
+
+        # Need at least 1 accepted + 1 rejected for this program.
+        prog_train = [r for r in train if r.program == held_out.program]
+        has_acc = any(r.result == "accepted" for r in prog_train)
+        has_rej = any(r.result == "rejected" for r in prog_train)
+        if not has_acc or not prog_train:
             continue
 
-        threshold = thresholds[record.program]
-        predicted = predict_outcome(record, threshold)
+        stats = compute_program_stats(train, held_out.program)
+        threshold = calibrate_program(stats, train)
 
+        # Use learned weights only if there's enough contrast.
+        if not has_rej:
+            threshold.feature_weights = {}
+
+        predicted = predict_outcome(held_out, threshold)
         results["total_predictions"] += 1
 
         if predicted == "borderline":
             results["borderline"] += 1
-        elif predicted == record.result:
+        elif predicted == held_out.result:
             results["correct"] += 1
         else:
             results["incorrect"] += 1
 
-        # Per-program tracking
-        if record.program not in results["per_program"]:
-            results["per_program"][record.program] = {
-                "correct": 0, "incorrect": 0, "borderline": 0, "total": 0,
+        pid = held_out.program
+        if pid not in results["per_program"]:
+            results["per_program"][pid] = {
+                "correct": 0, "incorrect": 0,
+                "borderline": 0, "total": 0,
             }
-        prog_stats = results["per_program"][record.program]
-        prog_stats["total"] += 1
+        pstats = results["per_program"][pid]
+        pstats["total"] += 1
         if predicted == "borderline":
-            prog_stats["borderline"] += 1
-        elif predicted == record.result:
-            prog_stats["correct"] += 1
+            pstats["borderline"] += 1
+        elif predicted == held_out.result:
+            pstats["correct"] += 1
         else:
-            prog_stats["incorrect"] += 1
+            pstats["incorrect"] += 1
 
     decided = results["correct"] + results["incorrect"]
-    results["accuracy"] = results["correct"] / decided if decided > 0 else 0.0
-
+    results["accuracy"] = (
+        results["correct"] / decided if decided > 0 else 0.0
+    )
     return results
 
 
