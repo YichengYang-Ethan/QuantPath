@@ -21,7 +21,7 @@ from core.interview_prep import (
     load_questions,
 )
 from core.list_builder import build_school_list
-from core.lr_predictor import predict_prob, get_model_stats
+from core.lr_predictor import predict_prob
 from core.prerequisite_matcher import match_prerequisites
 from core.profile_evaluator import evaluate as evaluate_profile
 from core.roi_calculator import calculate_roi
@@ -63,7 +63,11 @@ def cmd_evaluate(args: argparse.Namespace) -> None:
         console.print(f"[green]PDF report saved to:[/green] {path}")
         return
 
-    mode_label = " [bold yellow](Projected — including planned courses)[/bold yellow]" if projected else ""
+    mode_label = (
+        " [bold yellow](Projected — including planned courses)[/bold yellow]"
+        if projected
+        else ""
+    )
     # Header
     console.print()
     console.print(
