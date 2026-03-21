@@ -461,20 +461,17 @@ _GAP_THRESHOLD = 6.0  # factors below this are flagged as gaps
 _STRENGTH_THRESHOLD = 9.0  # factors at or above this are strengths
 
 
-def evaluate(profile: UserProfile) -> EvaluationResult:
+def evaluate(profile: UserProfile, projected: bool = False) -> EvaluationResult:
     """Run the full 5-dimension evaluation on *profile*.
-
-    Steps:
-        1. Score every factor within each dimension.
-        2. Compute each dimension's weighted score.
-        3. Compute the overall score (weighted across dimensions).
-        4. Identify gaps (score 0 or below 6).
-        5. Identify strengths (score >= 9).
 
     Parameters
     ----------
     profile:
         A fully-populated :class:`UserProfile`.
+    projected:
+        If True, merge ``profile.planned_coursework`` into the evaluation,
+        assuming all planned courses will be completed with an A grade.
+        Use this to see what the profile will look like at application time.
 
     Returns
     -------
@@ -483,6 +480,19 @@ def evaluate(profile: UserProfile) -> EvaluationResult:
         ``strengths``, and an empty ``school_recommendations`` dict
         (filled later by the school ranker).
     """
+    if projected and profile.planned_coursework:
+        # Merge planned courses in with grade "A" (assumed successful completion)
+        import copy
+        profile = copy.copy(profile)
+        extra = []
+        for c in profile.planned_coursework:
+            pc = copy.copy(c)
+            if not pc.grade or pc.grade in ("TBD", ""):
+                pc.grade = "A"
+            extra.append(pc)
+        profile = copy.copy(profile)
+        profile.coursework = list(profile.coursework) + extra
+
     scorers: dict[str, Any] = {
         "math": _score_math,
         "statistics": _score_statistics,

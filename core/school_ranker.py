@@ -15,8 +15,14 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
+from .lr_predictor import predict_prob
 from .models import EvaluationResult, ProgramData, UserProfile
 from .prerequisite_matcher import match_prerequisites
+
+# Probability thresholds for data-driven classification
+_PROB_SAFETY = 0.70   # P(admit) >= 70% → safety
+_PROB_REACH  = 0.40   # P(admit) < 40%  → reach
+# 40% <= P < 70% → target
 
 # ===================================================================
 # Classification logic
@@ -141,6 +147,7 @@ def rank_schools(
     programs: list[ProgramData],
     evaluation: EvaluationResult,
     calibration_overrides: Optional[dict[str, dict[str, Any]]] = None,
+    projected: bool = False,
 ) -> dict[str, Any]:
     """Rank and classify a set of programmes for the given applicant.
 
@@ -177,26 +184,42 @@ def rank_schools(
     results: list[dict[str, Any]] = []
     overrides = calibration_overrides or {}
 
+    # GRE Quant for LR prediction
+    gre_quant = profile.test_scores.gre_quant
+
     for prog in programs:
         # Prerequisite matching.
         pmatch = match_prerequisites(profile, prog)
 
-        # Classification (with optional data-driven overrides).
-        prog_overrides = overrides.get(prog.id)
-        category = _classify(
-            user_gpa=profile.gpa,
-            program_avg_gpa=prog.avg_gpa,
-            acceptance_rate=prog.acceptance_rate,
-            overrides=prog_overrides,
-        )
+        # --- Classification: LR probability first, heuristic fallback ---
+        admission_prob = predict_prob(prog.id, profile.gpa, gre_quant)
 
-        # Fit score.
+        if admission_prob is not None:
+            # Data-driven: use LR probability thresholds
+            if admission_prob >= _PROB_SAFETY:
+                category = "safety"
+            elif admission_prob >= _PROB_REACH:
+                category = "target"
+            else:
+                category = "reach"
+        else:
+            # No LR model — fall back to heuristic classification
+            prog_overrides = overrides.get(prog.id)
+            category = _classify(
+                user_gpa=profile.gpa,
+                program_avg_gpa=prog.avg_gpa,
+                acceptance_rate=prog.acceptance_rate,
+                overrides=prog_overrides,
+            )
+
+        # Fit score — boost overall_eval_score when projected mode is on
+        eval_score = evaluation.overall_score
         fit = _compute_fit_score(
             user_gpa=profile.gpa,
             program_avg_gpa=prog.avg_gpa,
             acceptance_rate=prog.acceptance_rate,
             prereq_match_score=pmatch.match_score,
-            overall_eval_score=evaluation.overall_score,
+            overall_eval_score=eval_score,
         )
 
         result_entry: dict[str, Any] = {
@@ -208,9 +231,11 @@ def rank_schools(
             "prereq_match_score": pmatch.match_score,
             "acceptance_rate": prog.acceptance_rate,
             "avg_gpa": prog.avg_gpa,
+            "admission_prob": admission_prob,
         }
 
         # Add calibration info if available
+        prog_overrides = overrides.get(prog.id)
         if prog_overrides:
             result_entry["calibrated"] = True
             result_entry["confidence"] = prog_overrides.get("confidence", "low")

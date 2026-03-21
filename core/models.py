@@ -116,6 +116,9 @@ class UserProfile:
     # Tests
     test_scores: TestScores = field(default_factory=TestScores)
 
+    # Planned future courses (for projected evaluation mode)
+    planned_coursework: list[Course] = field(default_factory=list)
+
     # Experience
     work_experience: list[dict[str, Any]] = field(default_factory=list)
     projects: list[dict[str, Any]] = field(default_factory=list)

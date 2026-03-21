@@ -1,0 +1,632 @@
+{
+  "baruch-mfe": {
+    "n_total": 555,
+    "n_accepted": 193,
+    "n_rejected": 362,
+    "accept_rate": 0.3477,
+    "auc": 0.5859,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.6294,
+      167.4687
+    ],
+    "stds": [
+      0.2865,
+      4.077
+    ],
+    "coef": [
+      0.313604,
+      0.25624
+    ],
+    "intercept": -0.660452,
+    "gpa_p25": 3.5,
+    "gpa_p50": 3.7,
+    "gpa_p75": 3.83,
+    "gre_p25": 167.0,
+    "gre_p50": 168.0,
+    "gre_p75": 170.0
+  },
+  "berkeley-mfe": {
+    "n_total": 386,
+    "n_accepted": 231,
+    "n_rejected": 155,
+    "accept_rate": 0.5984,
+    "auc": 0.5859,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.6555,
+      167.8761
+    ],
+    "stds": [
+      0.2591,
+      3.9343
+    ],
+    "coef": [
+      0.281449,
+      0.077284
+    ],
+    "intercept": 0.404827,
+    "gpa_p25": 3.5,
+    "gpa_p50": 3.7,
+    "gpa_p75": 3.84,
+    "gre_p25": 167.0,
+    "gre_p50": 168.0,
+    "gre_p75": 170.0
+  },
+  "bu-msmf": {
+    "n_total": 324,
+    "n_accepted": 217,
+    "n_rejected": 107,
+    "accept_rate": 0.6698,
+    "auc": 0.5862,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.5855,
+      166.9416
+    ],
+    "stds": [
+      0.292,
+      4.1733
+    ],
+    "coef": [
+      0.310111,
+      -0.066264
+    ],
+    "intercept": 0.721237,
+    "gpa_p25": 3.43,
+    "gpa_p50": 3.66,
+    "gpa_p75": 3.8,
+    "gre_p25": 166.0,
+    "gre_p50": 168.0,
+    "gre_p75": 170.0
+  },
+  "cmu-mscf": {
+    "n_total": 782,
+    "n_accepted": 380,
+    "n_rejected": 402,
+    "accept_rate": 0.4859,
+    "auc": 0.6481,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.6667,
+      167.9839
+    ],
+    "stds": [
+      0.2897,
+      2.5607
+    ],
+    "coef": [
+      0.574507,
+      0.190353
+    ],
+    "intercept": -0.081667,
+    "gpa_p25": 3.54,
+    "gpa_p50": 3.71,
+    "gpa_p75": 3.88,
+    "gre_p25": 167.0,
+    "gre_p50": 169.0,
+    "gre_p75": 170.0
+  },
+  "columbia-msfe": {
+    "n_total": 814,
+    "n_accepted": 375,
+    "n_rejected": 439,
+    "accept_rate": 0.4607,
+    "auc": 0.6591,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.6854,
+      167.5527
+    ],
+    "stds": [
+      0.2624,
+      4.1583
+    ],
+    "coef": [
+      0.569132,
+      0.075967
+    ],
+    "intercept": -0.184822,
+    "gpa_p25": 3.56,
+    "gpa_p50": 3.74,
+    "gpa_p75": 3.88,
+    "gre_p25": 166.0,
+    "gre_p50": 168.0,
+    "gre_p75": 170.0
+  },
+  "cornell-mfe": {
+    "n_total": 541,
+    "n_accepted": 303,
+    "n_rejected": 238,
+    "accept_rate": 0.5601,
+    "auc": 0.5996,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.6904,
+      167.9314
+    ],
+    "stds": [
+      0.2406,
+      3.634
+    ],
+    "coef": [
+      0.408308,
+      0.069215
+    ],
+    "intercept": 0.244888,
+    "gpa_p25": 3.59,
+    "gpa_p50": 3.73,
+    "gpa_p75": 3.86,
+    "gre_p25": 167.0,
+    "gre_p50": 169.0,
+    "gre_p75": 170.0
+  },
+  "fordham-msqf": {
+    "n_total": 106,
+    "n_accepted": 90,
+    "n_rejected": 16,
+    "accept_rate": 0.8491,
+    "auc": 0.5926,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.5361,
+      167.5443
+    ],
+    "stds": [
+      0.3387,
+      2.5432
+    ],
+    "coef": [
+      0.284519,
+      -0.642485
+    ],
+    "intercept": 1.851024,
+    "gpa_p25": 3.32,
+    "gpa_p50": 3.56,
+    "gpa_p75": 3.81,
+    "gre_p25": 167.0,
+    "gre_p50": 168.0,
+    "gre_p75": 170.0
+  },
+  "gatech-qcf": {
+    "n_total": 409,
+    "n_accepted": 239,
+    "n_rejected": 170,
+    "accept_rate": 0.5844,
+    "auc": 0.5412,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.5341,
+      167.9812
+    ],
+    "stds": [
+      0.3111,
+      2.584
+    ],
+    "coef": [
+      0.21964,
+      0.093022
+    ],
+    "intercept": 0.344733,
+    "gpa_p25": 3.36,
+    "gpa_p50": 3.6,
+    "gpa_p75": 3.78,
+    "gre_p25": 167.0,
+    "gre_p50": 168.0,
+    "gre_p75": 170.0
+  },
+  "jhu-mfm": {
+    "n_total": 122,
+    "n_accepted": 68,
+    "n_rejected": 54,
+    "accept_rate": 0.5574,
+    "auc": 0.6964,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.6819,
+      168.069
+    ],
+    "stds": [
+      0.2636,
+      2.8736
+    ],
+    "coef": [
+      0.724494,
+      -0.161239
+    ],
+    "intercept": 0.226159,
+    "gpa_p25": 3.59,
+    "gpa_p50": 3.73,
+    "gpa_p75": 3.87,
+    "gre_p25": 167.0,
+    "gre_p50": 169.0,
+    "gre_p75": 170.0
+  },
+  "ncstate-mfm": {
+    "n_total": 145,
+    "n_accepted": 120,
+    "n_rejected": 25,
+    "accept_rate": 0.8276,
+    "auc": 0.7108,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.4678,
+      166.9496
+    ],
+    "stds": [
+      0.3211,
+      2.7614
+    ],
+    "coef": [
+      0.734599,
+      0.611449
+    ],
+    "intercept": 1.839718,
+    "gpa_p25": 3.24,
+    "gpa_p50": 3.5,
+    "gpa_p75": 3.7,
+    "gre_p25": 166.0,
+    "gre_p50": 167.0,
+    "gre_p75": 169.0
+  },
+  "nyu-tandon-mfe": {
+    "n_total": 520,
+    "n_accepted": 336,
+    "n_rejected": 184,
+    "accept_rate": 0.6462,
+    "auc": 0.6473,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.6191,
+      167.7505
+    ],
+    "stds": [
+      0.2945,
+      3.8437
+    ],
+    "coef": [
+      0.489256,
+      -0.091704
+    ],
+    "intercept": 0.627637,
+    "gpa_p25": 3.48,
+    "gpa_p50": 3.7,
+    "gpa_p75": 3.84,
+    "gre_p25": 167.0,
+    "gre_p50": 168.0,
+    "gre_p75": 170.0
+  },
+  "rutgers-mqf": {
+    "n_total": 154,
+    "n_accepted": 138,
+    "n_rejected": 16,
+    "accept_rate": 0.8961,
+    "auc": 0.6663,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.4133,
+      166.6875
+    ],
+    "stds": [
+      0.3339,
+      3.3897
+    ],
+    "coef": [
+      -0.4651,
+      0.635661
+    ],
+    "intercept": 2.37962,
+    "gpa_p25": 3.2,
+    "gpa_p50": 3.45,
+    "gpa_p75": 3.69,
+    "gre_p25": 165.0,
+    "gre_p50": 167.0,
+    "gre_p75": 170.0
+  },
+  "stanford-mcf": {
+    "n_total": 166,
+    "n_accepted": 30,
+    "n_rejected": 136,
+    "accept_rate": 0.1807,
+    "auc": 0.7449,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.7604,
+      167.9357
+    ],
+    "stds": [
+      0.204,
+      3.6754
+    ],
+    "coef": [
+      0.941844,
+      0.03555
+    ],
+    "intercept": -1.754474,
+    "gpa_p25": 3.64,
+    "gpa_p50": 3.8,
+    "gpa_p75": 3.92,
+    "gre_p25": 166.0,
+    "gre_p50": 168.0,
+    "gre_p75": 170.0
+  },
+  "uchicago-msfm": {
+    "n_total": 676,
+    "n_accepted": 413,
+    "n_rejected": 263,
+    "accept_rate": 0.6109,
+    "auc": 0.6273,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.6798,
+      167.7959
+    ],
+    "stds": [
+      0.2579,
+      3.7862
+    ],
+    "coef": [
+      0.412718,
+      0.021115
+    ],
+    "intercept": 0.463271,
+    "gpa_p25": 3.55,
+    "gpa_p50": 3.73,
+    "gpa_p75": 3.86,
+    "gre_p25": 167.0,
+    "gre_p50": 168.0,
+    "gre_p75": 170.0
+  },
+  "ucla-mfe": {
+    "n_total": 265,
+    "n_accepted": 178,
+    "n_rejected": 87,
+    "accept_rate": 0.6717,
+    "auc": 0.5993,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.6073,
+      168.1399
+    ],
+    "stds": [
+      0.2661,
+      2.0031
+    ],
+    "coef": [
+      -0.124481,
+      -0.308937
+    ],
+    "intercept": 0.735761,
+    "gpa_p25": 3.48,
+    "gpa_p50": 3.63,
+    "gpa_p75": 3.81,
+    "gre_p25": 167.0,
+    "gre_p50": 168.0,
+    "gre_p75": 170.0
+  },
+  "uiuc-msfe": {
+    "n_total": 177,
+    "n_accepted": 139,
+    "n_rejected": 38,
+    "accept_rate": 0.7853,
+    "auc": 0.6403,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.5744,
+      167.3922
+    ],
+    "stds": [
+      0.3039,
+      3.9833
+    ],
+    "coef": [
+      0.424988,
+      -0.009129
+    ],
+    "intercept": 1.345685,
+    "gpa_p25": 3.44,
+    "gpa_p50": 3.6,
+    "gpa_p75": 3.8,
+    "gre_p25": 167.0,
+    "gre_p50": 168.0,
+    "gre_p75": 170.0
+  },
+  "umich-mfe": {
+    "n_total": 30,
+    "n_accepted": 16,
+    "n_rejected": 14,
+    "accept_rate": 0.5333,
+    "auc": 0.7083,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.7045,
+      169.0741
+    ],
+    "stds": [
+      0.2143,
+      1.982
+    ],
+    "coef": [
+      0.539325,
+      0.710993
+    ],
+    "intercept": 0.125306,
+    "gpa_p25": 3.55,
+    "gpa_p50": 3.71,
+    "gpa_p75": 3.9,
+    "gre_p25": 169.0,
+    "gre_p50": 170.0,
+    "gre_p75": 170.0
+  },
+  "uminn-mfm": {
+    "n_total": 37,
+    "n_accepted": 27,
+    "n_rejected": 10,
+    "accept_rate": 0.7297,
+    "auc": 0.27,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.4316,
+      165.6857
+    ],
+    "stds": [
+      0.3591,
+      4.4343
+    ],
+    "coef": [
+      -0.037413,
+      -0.176965
+    ],
+    "intercept": 1.001138,
+    "gpa_p25": 3.29,
+    "gpa_p50": 3.5,
+    "gpa_p75": 3.65,
+    "gre_p25": 165.0,
+    "gre_p50": 167.0,
+    "gre_p75": 169.0
+  },
+  "usc-msmf": {
+    "n_total": 85,
+    "n_accepted": 58,
+    "n_rejected": 27,
+    "accept_rate": 0.6824,
+    "auc": 0.6817,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.5991,
+      167.025
+    ],
+    "stds": [
+      0.2986,
+      5.2647
+    ],
+    "coef": [
+      0.847589,
+      0.069223
+    ],
+    "intercept": 0.831171,
+    "gpa_p25": 3.48,
+    "gpa_p50": 3.68,
+    "gpa_p75": 3.8,
+    "gre_p25": 166.0,
+    "gre_p50": 168.0,
+    "gre_p75": 170.0
+  },
+  "utoronto-mmf": {
+    "n_total": 149,
+    "n_accepted": 79,
+    "n_rejected": 70,
+    "accept_rate": 0.5302,
+    "auc": 0.6595,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.7307,
+      167.4951
+    ],
+    "stds": [
+      0.205,
+      2.5459
+    ],
+    "coef": [
+      0.774655,
+      -0.133285
+    ],
+    "intercept": 0.101587,
+    "gpa_p25": 3.65,
+    "gpa_p50": 3.77,
+    "gpa_p75": 3.87,
+    "gre_p25": 167.0,
+    "gre_p50": 167.0,
+    "gre_p75": 170.0
+  },
+  "uwash-cfrm": {
+    "n_total": 171,
+    "n_accepted": 101,
+    "n_rejected": 70,
+    "accept_rate": 0.5906,
+    "auc": 0.7207,
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "means": [
+      3.6041,
+      167.4258
+    ],
+    "stds": [
+      0.2875,
+      4.0479
+    ],
+    "coef": [
+      0.82363,
+      0.075608
+    ],
+    "intercept": 0.387599,
+    "gpa_p25": 3.48,
+    "gpa_p50": 3.64,
+    "gpa_p75": 3.8,
+    "gre_p25": 167.0,
+    "gre_p50": 168.0,
+    "gre_p75": 170.0
+  }
+}

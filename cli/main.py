@@ -21,6 +21,7 @@ from core.interview_prep import (
     load_questions,
 )
 from core.list_builder import build_school_list
+from core.lr_predictor import predict_prob, get_model_stats
 from core.prerequisite_matcher import match_prerequisites
 from core.profile_evaluator import evaluate as evaluate_profile
 from core.roi_calculator import calculate_roi
@@ -41,12 +42,13 @@ def cmd_evaluate(args: argparse.Namespace) -> None:
     """Evaluate a user profile against MFE programs."""
     profile = load_profile(args.profile)
     programs = load_all_programs()
-    result = evaluate_profile(profile)
+    projected = getattr(args, "projected", False)
+    result = evaluate_profile(profile, projected=projected)
 
     # PDF output path requested
     output_path = getattr(args, "output", None)
     if output_path and output_path.endswith(".pdf"):
-        rankings = rank_schools(profile, programs, result)
+        rankings = rank_schools(profile, programs, result, projected=projected)
         gap_recs = analyze_gaps(result.gaps) if result.gaps else []
 
         from core.report_generator import generate_report
@@ -61,12 +63,14 @@ def cmd_evaluate(args: argparse.Namespace) -> None:
         console.print(f"[green]PDF report saved to:[/green] {path}")
         return
 
+    mode_label = " [bold yellow](Projected — including planned courses)[/bold yellow]" if projected else ""
     # Header
     console.print()
     console.print(
         Panel(
             f"[bold]{profile.name}[/bold] | {profile.university} | "
-            f"GPA {profile.gpa} | {'International' if profile.is_international else 'Domestic'}",
+            f"GPA {profile.gpa} | {'International' if profile.is_international else 'Domestic'}"
+            + mode_label,
             title="QuantPath Profile Evaluation",
             border_style="cyan",
         )
@@ -116,19 +120,70 @@ def cmd_evaluate(args: argparse.Namespace) -> None:
     )
     console.print()
 
-    # School recommendations
-    rankings = rank_schools(profile, programs, result)
+    # School recommendations (use projected mode if flag set)
+    rankings = rank_schools(profile, programs, result, projected=projected)
 
     if rankings.get("reach"):
         reach_names = ", ".join(r["name"] for r in rankings["reach"])
-        console.print(f"  🎯 [bold]Reach:[/bold]   {reach_names}")
+        console.print(f"  Reach:   {reach_names}")
     if rankings.get("target"):
         target_names = ", ".join(r["name"] for r in rankings["target"])
-        console.print(f"  🎯 [bold]Target:[/bold]  {target_names}")
+        console.print(f"  Target:  {target_names}")
     if rankings.get("safety"):
         safety_names = ", ".join(r["name"] for r in rankings["safety"])
-        console.print(f"  🎯 [bold]Safety:[/bold]  {safety_names}")
+        console.print(f"  Safety:  {safety_names}")
     console.print()
+
+    # If projected mode, show comparison: current vs projected
+    if projected and profile.planned_coursework:
+        current_result = evaluate_profile(profile, projected=False)
+        curr_overall = current_result.overall_score
+        proj_overall = result.overall_score
+        diff = proj_overall - curr_overall
+        diff_color = "green" if diff > 0 else "red"
+
+        compare_table = Table(
+            title="[bold]Current vs Projected Profile[/bold]",
+            border_style="yellow",
+            show_lines=True,
+        )
+        compare_table.add_column("Dimension", style="bold", width=16)
+        compare_table.add_column("Current", justify="right", width=10)
+        compare_table.add_column("Projected", justify="right", width=10)
+        compare_table.add_column("Change", justify="right", width=10)
+
+        dim_labels_compare = {
+            "math": "Math",
+            "statistics": "Statistics",
+            "cs": "CS",
+            "finance_econ": "Finance/Econ",
+            "gpa": "GPA",
+        }
+        for dim_id, label in dim_labels_compare.items():
+            curr_s = current_result.dimension_scores.get(dim_id, 0)
+            proj_s = result.dimension_scores.get(dim_id, 0)
+            delta = proj_s - curr_s
+            d_color = "green" if delta > 0.1 else "dim" if abs(delta) <= 0.1 else "red"
+            compare_table.add_row(
+                label,
+                f"{curr_s:.1f}",
+                f"[bold]{proj_s:.1f}[/bold]",
+                f"[{d_color}]{delta:+.1f}[/{d_color}]",
+            )
+        compare_table.add_row(
+            "[bold]OVERALL[/bold]",
+            f"{curr_overall:.1f}",
+            f"[bold]{proj_overall:.1f}[/bold]",
+            f"[{diff_color}]{diff:+.1f}[/{diff_color}]",
+        )
+        console.print(compare_table)
+        n_planned = len(profile.planned_coursework)
+        console.print(
+            f"  [dim]({n_planned} planned courses included: "
+            + ", ".join(c.code for c in profile.planned_coursework[:5])
+            + ("..." if n_planned > 5 else "") + ")[/dim]"
+        )
+        console.print()
 
     # Gaps
     if result.gaps:
@@ -563,8 +618,13 @@ def cmd_list(args: argparse.Namespace) -> None:
     """Build and display an optimised school application list."""
     profile = load_profile(args.profile)
     programs = load_all_programs()
-    evaluation = evaluate_profile(profile)
+    projected = getattr(args, "projected", False)
+    evaluation = evaluate_profile(profile, projected=projected)
     school_list = build_school_list(profile, programs, evaluation)
+
+    # Determine GRE Quant score for LR prediction
+    gre_quant = profile.test_scores.gre_quant
+    gpa = profile.gpa
 
     console.print()
     console.print(
@@ -591,14 +651,22 @@ def cmd_list(args: argparse.Namespace) -> None:
         table.add_column("University", min_width=18)
         table.add_column("Fit", justify="right", width=6)
         table.add_column("Prereq", justify="right", width=7)
-        table.add_column("Reason", min_width=30)
+        table.add_column("P(Admit)", justify="right", width=9)
+        table.add_column("Reason", min_width=28)
 
         for e in entries:
+            prob = predict_prob(e.program_id, gpa, gre_quant)
+            if prob is not None:
+                pcolor = "green" if prob >= 0.6 else "yellow" if prob >= 0.35 else "red"
+                prob_str = f"[{pcolor}]{prob:.0%}[/{pcolor}]"
+            else:
+                prob_str = "[dim]N/A[/dim]"
             table.add_row(
                 e.name,
                 e.university,
                 f"{e.fit_score:.1f}",
                 f"{e.prereq_match_score:.0%}",
+                prob_str,
                 e.reason,
             )
         console.print(table)
@@ -1018,6 +1086,11 @@ def main() -> None:
         "-o",
         help="Output file path (use .pdf extension for PDF report)",
     )
+    p_eval.add_argument(
+        "--projected",
+        action="store_true",
+        help="Include planned_courses from profile YAML (shows profile at application time)",
+    )
 
     # match
     p_match = subparsers.add_parser("match", help="Match prerequisites")
@@ -1114,6 +1187,11 @@ def main() -> None:
     # list
     p_list = subparsers.add_parser("list", help="Build optimised school application list")
     p_list.add_argument("--profile", "-p", required=True, help="Path to profile YAML")
+    p_list.add_argument(
+        "--projected",
+        action="store_true",
+        help="Include planned courses (shows school list at application time)",
+    )
 
     args = parser.parse_args()
 

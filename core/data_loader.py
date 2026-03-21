@@ -234,9 +234,13 @@ def load_profile(path: str) -> UserProfile:
     # Courses — support both "courses" and "coursework" keys
     raw_courses = raw.get("courses", raw.get("coursework", []))
 
+    # Planned future courses (for projected evaluation mode)
+    raw_planned = raw.get("planned_courses", [])
+
     return UserProfile(
         name=personal.get("name", raw.get("name", "")),
         coursework=[_parse_course(c) for c in raw_courses],
+        planned_coursework=[_parse_course(c) for c in raw_planned],
         gpa=float(personal.get("gpa", raw.get("gpa", 0.0))),
         gpa_quant=float(raw.get("gpa_quant", 0.0)),
         university=personal.get("university", raw.get("university", "")),
