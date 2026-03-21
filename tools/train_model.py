@@ -15,20 +15,42 @@ import argparse
 import csv
 import json
 import warnings
+from collections import defaultdict
 from pathlib import Path
-from collections import Counter, defaultdict
 
 import numpy as np
 from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 warnings.filterwarnings("ignore")
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 CSV_PATH = DATA_DIR / "admissions" / "collected.csv"
 MODEL_DIR = DATA_DIR / "models"
+PROGRAMS_DIR = DATA_DIR / "programs"
+
+
+def load_real_accept_rates() -> dict[str, float]:
+    """Load real (official) acceptance rates from program YAML files."""
+    import yaml  # optional dep
+
+    rates: dict[str, float] = {}
+    if not PROGRAMS_DIR.exists():
+        return rates
+    for yml_path in PROGRAMS_DIR.glob("*.yaml"):
+        try:
+            with yml_path.open(encoding="utf-8") as f:
+                data = yaml.safe_load(f)
+            prog_id = data.get("id") or yml_path.stem
+            admissions = data.get("admissions") or {}
+            rate = admissions.get("acceptance_rate")
+            if rate is not None:
+                rates[prog_id] = float(rate)
+        except Exception:
+            pass
+    return rates
 
 
 def load_data(csv_path: Path) -> dict[str, list[dict]]:
@@ -115,8 +137,7 @@ def train_program(records: list[dict], min_samples: int = 30) -> dict | None:
     if n_pos < 5 or n_neg < 5:
         return None
 
-    # 用中位数/均值统计（用于推理时标准化）
-    col_means = np.nanmean(X, axis=0)
+    # 用标准差统计（用于推理时标准化）
     col_stds = np.nanstd(X, axis=0)
     col_stds[col_stds == 0] = 1.0
 
@@ -200,6 +221,12 @@ def main() -> None:
             continue
         models[prog] = result
 
+    # 注入真实接受率（用于预测时的偏差校正）
+    real_rates = load_real_accept_rates()
+    for prog, m in models.items():
+        if prog in real_rates:
+            m["real_accept_rate"] = round(real_rates[prog], 4)
+
     # 保存为JSON（所有项目）
     output_path = MODEL_DIR / "admission_models.json"
     with output_path.open("w", encoding="utf-8") as f:
@@ -208,22 +235,24 @@ def main() -> None:
     print(f"\n训练完成: {len(models)} 个项目 → {output_path}")
     print(f"跳过(样本不足): {len(skipped)} 个")
 
-    # 打印训练结果摘要
-    print(f"\n{'项目':<22} {'样本':>6} {'录取率':>8} {'AUC':>7} {'GPA中位数':>10} {'GRE中位数':>10}")
+    # 打印训练结果摘要（含偏差校正列）
+    print(f"\n{'项目':<22} {'样本':>6} {'数据率':>8} {'真实率':>8} {'AUC':>7} {'GPA中位数':>10}")
     print("-" * 72)
     for prog, m in sorted(models.items(), key=lambda x: -x[1]["n_total"]):
+        real = m.get("real_accept_rate")
+        real_str = f"{real:.1%}" if real is not None else "  N/A"
         print(
             f"{prog:<22} {m['n_total']:>6} {m['accept_rate']:>8.1%} "
-            f"{m['auc']:>7.3f} {m['gpa_p50']:>10.2f} {m['gre_p50']:>10.0f}"
+            f"{real_str:>8} {m['auc']:>7.3f} {m['gpa_p50']:>10.2f}"
         )
 
     if skipped:
-        print(f"\n跳过项目:")
+        print("\n跳过项目:")
         for prog, n in skipped:
             print(f"  {prog}: {n}条")
 
     if args.eval:
-        print(f"\n评估：Ethan Yang的预测概率（GPA=4.0, GRE=170）")
+        print("\n评估：Ethan Yang的预测概率（GPA=4.0, GRE=170）")
         print(f"{'项目':<22} {'P(录取)':>10}")
         print("-" * 35)
         for prog in sorted(models.keys()):

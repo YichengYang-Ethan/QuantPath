@@ -12,7 +12,7 @@ from core.admission_data import load_admission_csv, load_all_admission_data, sum
 from core.calibrator import calibrate_all, generate_ranker_overrides
 from core.course_optimizer import optimize_courses
 from core.data_loader import load_all_programs, load_profile
-from core.gap_advisor import analyze_gaps
+from core.gap_advisor import analyze_gaps, program_gaps
 from core.interview_prep import (
     get_questions_by_category,
     get_questions_by_difficulty,
@@ -20,8 +20,7 @@ from core.interview_prep import (
     get_random_quiz,
     load_questions,
 )
-from core.list_builder import build_school_list
-from core.lr_predictor import predict_prob
+from core.list_builder import build_school_list, optimize_portfolio
 from core.prerequisite_matcher import match_prerequisites
 from core.profile_evaluator import evaluate as evaluate_profile
 from core.roi_calculator import calculate_roi
@@ -659,10 +658,18 @@ def cmd_list(args: argparse.Namespace) -> None:
         table.add_column("Reason", min_width=28)
 
         for e in entries:
-            prob = predict_prob(e.program_id, gpa, gre_quant)
-            if prob is not None:
-                pcolor = "green" if prob >= 0.6 else "yellow" if prob >= 0.35 else "red"
-                prob_str = f"[{pcolor}]{prob:.0%}[/{pcolor}]"
+            from core.lr_predictor import predict_prob_full
+            lr = predict_prob_full(e.program_id, gpa, gre_quant, profile)
+            if lr is not None:
+                pcolor = (
+                    "green" if lr.prob >= 0.6
+                    else "yellow" if lr.prob >= 0.35
+                    else "red"
+                )
+                prob_str = (
+                    f"[{pcolor}]{lr.prob:.0%}[/{pcolor}]"
+                    f" [dim][{lr.prob_low:.0%}–{lr.prob_high:.0%}][/dim]"
+                )
             else:
                 prob_str = "[dim]N/A[/dim]"
             table.add_row(
@@ -819,8 +826,79 @@ def cmd_optimize(args: argparse.Namespace) -> None:
 def cmd_gaps(args: argparse.Namespace) -> None:
     """Analyze profile gaps and suggest improvements."""
     profile = load_profile(args.profile)
+    programs = load_all_programs()
     result = evaluate_profile(profile)
 
+    # --- Per-program mode -------------------------------------------
+    target_program_id = getattr(args, "program", None)
+    if target_program_id:
+        matched = [p for p in programs if p.id == target_program_id]
+        if not matched:
+            console.print(f"[red]Program '{target_program_id}' not found.[/red]")
+            return
+        prog = matched[0]
+        report = program_gaps(profile, prog, result)
+
+        console.print()
+        console.print(
+            Panel(
+                f"[bold]Program Gap Analysis[/bold]\n"
+                f"{profile.name}  →  {report.program_name} ({report.university})",
+                border_style="cyan",
+            )
+        )
+
+        # Admission probability
+        if report.admission_prob is not None:
+            pcolor = (
+                "green" if report.admission_prob >= 0.6
+                else "yellow" if report.admission_prob >= 0.35
+                else "red"
+            )
+            ci_str = (
+                f" [dim][{report.prob_low:.0%}–{report.prob_high:.0%} CI][/dim]"
+                if report.prob_low is not None else ""
+            )
+            console.print(
+                f"  P(Admit): [{pcolor}]{report.admission_prob:.0%}[/{pcolor}]{ci_str}"
+            )
+        console.print(
+            f"  Prereq Match: {report.prereq_match_score:.0%}  |  "
+            f"GPA Gap: {report.gpa_gap:+.2f}"
+        )
+        console.print()
+
+        if not report.items:
+            console.print(
+                "  [bold green]No gaps for this program — "
+                "your profile is well aligned.[/bold green]"
+            )
+            console.print()
+            return
+
+        gap_table = Table(border_style="cyan", show_lines=True)
+        gap_table.add_column("Severity", width=10, justify="center")
+        gap_table.add_column("Gap", style="bold", min_width=28)
+        gap_table.add_column("Action", min_width=44)
+
+        sev_colors = {"Critical": "red", "High": "red", "Medium": "yellow", "Low": "cyan"}
+        for item in report.items:
+            sc = sev_colors.get(item.severity, "white")
+            gap_table.add_row(
+                f"[{sc}]{item.severity}[/{sc}]",
+                item.label,
+                item.detail,
+            )
+
+        console.print(gap_table)
+        console.print(
+            f"  [dim]{report.n_critical} Critical  {report.n_high} High  "
+            f"{len(report.items) - report.n_critical - report.n_high} Medium/Low[/dim]"
+        )
+        console.print()
+        return
+
+    # --- Profile-level gap mode (default) ---------------------------
     console.print()
     console.print(
         Panel(
@@ -1075,6 +1153,68 @@ def cmd_calibrate(args: argparse.Namespace) -> None:
             console.print()
 
 
+def cmd_portfolio(args: argparse.Namespace) -> None:
+    """Optimize school portfolio to maximize expected admissions."""
+    profile = load_profile(args.profile)
+    programs = load_all_programs()
+    evaluation = evaluate_profile(profile)
+
+    n_schools = getattr(args, "n_schools", 10)
+    budget = getattr(args, "budget", 2000)
+
+    portfolio = optimize_portfolio(
+        profile, programs, evaluation,
+        n_schools=n_schools,
+        budget=budget,
+    )
+
+    console.print()
+    console.print(
+        Panel(
+            f"[bold]Portfolio Optimizer[/bold] for {profile.name}\n"
+            f"Maximizing expected admissions under "
+            f"n≤{n_schools} schools and ${budget:,} fee budget",
+            border_style="cyan",
+        )
+    )
+
+    cat_styles = {"reach": "red", "target": "yellow", "safety": "green"}
+    table = Table(border_style="cyan", show_lines=True)
+    table.add_column("Category", width=8, justify="center")
+    table.add_column("Program", style="bold", min_width=20)
+    table.add_column("University", min_width=18)
+    table.add_column("P(Admit)", justify="right", width=9)
+    table.add_column("Fit", justify="right", width=6)
+    table.add_column("Fee", justify="right", width=7)
+    table.add_column("Exp. Contrib.", justify="right", width=12)
+
+    for e in portfolio.programs:
+        cat_color = cat_styles.get(e.category, "white")
+        pcolor = (
+            "green" if e.admission_prob >= 0.60
+            else "yellow" if e.admission_prob >= 0.35
+            else "red"
+        )
+        table.add_row(
+            f"[{cat_color}]{e.category.title()}[/{cat_color}]",
+            e.name,
+            e.university,
+            f"[{pcolor}]{e.admission_prob:.0%}[/{pcolor}]",
+            f"{e.fit_score:.1f}",
+            f"${e.application_fee:,}" if e.application_fee else "N/A",
+            f"[green]+{e.expected_contribution:.2f}[/green]",
+        )
+
+    console.print(table)
+    console.print()
+    console.print(
+        f"  [bold]Expected admits:[/bold] [green]{portfolio.expected_admits:.2f}[/green] schools\n"
+        f"  [bold]Total fees:[/bold] ${portfolio.total_fees:,}\n"
+        f"  [dim]{portfolio.summary}[/dim]"
+    )
+    console.print()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="quantpath",
@@ -1164,6 +1304,10 @@ def main() -> None:
     # gaps
     p_gaps = subparsers.add_parser("gaps", help="Analyze profile gaps and suggest improvements")
     p_gaps.add_argument("--profile", "-p", required=True, help="Path to profile YAML")
+    p_gaps.add_argument(
+        "--program",
+        help="Show gaps specific to one program (e.g. baruch-mfe, cmu-mscf)",
+    )
 
     # stats (real data)
     p_stats = subparsers.add_parser("stats", help="Show statistics from real admission data")
@@ -1197,6 +1341,24 @@ def main() -> None:
         help="Include planned courses (shows school list at application time)",
     )
 
+    # portfolio
+    p_portfolio = subparsers.add_parser(
+        "portfolio", help="Optimize school portfolio to maximize expected admissions"
+    )
+    p_portfolio.add_argument("--profile", "-p", required=True, help="Path to profile YAML")
+    p_portfolio.add_argument(
+        "--n-schools",
+        type=int,
+        default=10,
+        help="Max number of schools to select (default: 10)",
+    )
+    p_portfolio.add_argument(
+        "--budget",
+        type=int,
+        default=2000,
+        help="Max total application fees in USD (default: $2,000)",
+    )
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -1217,6 +1379,7 @@ def main() -> None:
         "calibrate": cmd_calibrate,
         "optimize": cmd_optimize,
         "list": cmd_list,
+        "portfolio": cmd_portfolio,
     }
     commands[args.command](args)
 

@@ -27,7 +27,8 @@
     "gpa_p75": 3.83,
     "gre_p25": 167.0,
     "gre_p50": 168.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.04
   },
   "berkeley-mfe": {
     "n_total": 386,
@@ -57,7 +58,8 @@
     "gpa_p75": 3.84,
     "gre_p25": 167.0,
     "gre_p50": 168.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.174
   },
   "bu-msmf": {
     "n_total": 324,
@@ -87,7 +89,8 @@
     "gpa_p75": 3.8,
     "gre_p25": 166.0,
     "gre_p50": 168.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.806
   },
   "cmu-mscf": {
     "n_total": 782,
@@ -117,7 +120,8 @@
     "gpa_p75": 3.88,
     "gre_p25": 167.0,
     "gre_p50": 169.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.172
   },
   "columbia-msfe": {
     "n_total": 814,
@@ -147,7 +151,8 @@
     "gpa_p75": 3.88,
     "gre_p25": 166.0,
     "gre_p50": 168.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.133
   },
   "cornell-mfe": {
     "n_total": 541,
@@ -177,7 +182,8 @@
     "gpa_p75": 3.86,
     "gre_p25": 167.0,
     "gre_p50": 169.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.207
   },
   "fordham-msqf": {
     "n_total": 106,
@@ -207,7 +213,8 @@
     "gpa_p75": 3.81,
     "gre_p25": 167.0,
     "gre_p50": 168.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.594
   },
   "gatech-qcf": {
     "n_total": 409,
@@ -237,7 +244,8 @@
     "gpa_p75": 3.78,
     "gre_p25": 167.0,
     "gre_p50": 168.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.302
   },
   "jhu-mfm": {
     "n_total": 122,
@@ -267,7 +275,8 @@
     "gpa_p75": 3.87,
     "gre_p25": 167.0,
     "gre_p50": 169.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.507
   },
   "ncstate-mfm": {
     "n_total": 145,
@@ -297,7 +306,8 @@
     "gpa_p75": 3.7,
     "gre_p25": 166.0,
     "gre_p50": 167.0,
-    "gre_p75": 169.0
+    "gre_p75": 169.0,
+    "real_accept_rate": 0.167
   },
   "nyu-tandon-mfe": {
     "n_total": 520,
@@ -327,7 +337,8 @@
     "gpa_p75": 3.84,
     "gre_p25": 167.0,
     "gre_p50": 168.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.381
   },
   "rutgers-mqf": {
     "n_total": 154,
@@ -357,7 +368,8 @@
     "gpa_p75": 3.69,
     "gre_p25": 165.0,
     "gre_p50": 167.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.864
   },
   "stanford-mcf": {
     "n_total": 166,
@@ -387,7 +399,8 @@
     "gpa_p75": 3.92,
     "gre_p25": 166.0,
     "gre_p50": 168.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.05
   },
   "uchicago-msfm": {
     "n_total": 676,
@@ -417,7 +430,8 @@
     "gpa_p75": 3.86,
     "gre_p25": 167.0,
     "gre_p50": 168.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.22
   },
   "ucla-mfe": {
     "n_total": 265,
@@ -447,7 +461,8 @@
     "gpa_p75": 3.81,
     "gre_p25": 167.0,
     "gre_p50": 168.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.36
   },
   "uiuc-msfe": {
     "n_total": 177,
@@ -477,7 +492,8 @@
     "gpa_p75": 3.8,
     "gre_p25": 167.0,
     "gre_p50": 168.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.507
   },
   "umich-mfe": {
     "n_total": 30,
@@ -507,7 +523,8 @@
     "gpa_p75": 3.9,
     "gre_p25": 169.0,
     "gre_p50": 170.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.15
   },
   "uminn-mfm": {
     "n_total": 37,
@@ -537,7 +554,8 @@
     "gpa_p75": 3.65,
     "gre_p25": 165.0,
     "gre_p50": 167.0,
-    "gre_p75": 169.0
+    "gre_p75": 169.0,
+    "real_accept_rate": 0.807
   },
   "usc-msmf": {
     "n_total": 85,
@@ -567,7 +585,8 @@
     "gpa_p75": 3.8,
     "gre_p25": 166.0,
     "gre_p50": 168.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.2
   },
   "utoronto-mmf": {
     "n_total": 149,
@@ -597,7 +616,8 @@
     "gpa_p75": 3.87,
     "gre_p25": 167.0,
     "gre_p50": 167.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.15
   },
   "uwash-cfrm": {
     "n_total": 171,
@@ -627,6 +647,7 @@
     "gpa_p75": 3.8,
     "gre_p25": 167.0,
     "gre_p50": 168.0,
-    "gre_p75": 170.0
+    "gre_p75": 170.0,
+    "real_accept_rate": 0.539
   }
 }

@@ -262,3 +262,169 @@ def build_school_list(
         total_application_fees=total_fees,
         summary=summary,
     )
+
+
+# ===================================================================
+# Portfolio optimizer
+# ===================================================================
+
+
+@dataclass
+class PortfolioEntry:
+    """One program selected by the portfolio optimizer."""
+
+    program_id: str
+    name: str
+    university: str
+    category: str
+    admission_prob: float
+    fit_score: float
+    application_fee: int
+    expected_contribution: float   # = admission_prob (independent model)
+
+
+@dataclass
+class OptimizedPortfolio:
+    """Result of the portfolio optimizer."""
+
+    programs: list[PortfolioEntry]
+    expected_admits: float
+    total_fees: int
+    summary: str
+
+
+def optimize_portfolio(
+    profile: UserProfile,
+    programs: list[ProgramData],
+    evaluation: EvaluationResult,
+    n_schools: int = 10,
+    budget: int = 2000,
+) -> OptimizedPortfolio:
+    """Select programs maximizing expected admissions under budget/count constraints.
+
+    Uses a greedy marginal-value selection:
+        value_i = P(admit_i) / max(1, fee_i / avg_fee)
+
+    This balances admission probability against fee cost, selecting the
+    highest-value programs until n_schools is reached or budget is exhausted.
+
+    Guarantees at least 1 reach, 2 target, 1 safety if available.
+
+    Parameters
+    ----------
+    profile:
+        The applicant's profile.
+    programs:
+        All candidate programs.
+    evaluation:
+        Pre-computed evaluation result.
+    n_schools:
+        Maximum number of programs to select.
+    budget:
+        Maximum total application fee budget (USD).
+
+    Returns
+    -------
+    OptimizedPortfolio
+        The selected programs with expected admits and fee totals.
+    """
+    from .school_ranker import rank_schools
+
+    rankings = rank_schools(profile, programs, evaluation)
+    all_ranked = rankings["all"]
+
+    fee_map: dict[str, int] = {p.id: p.application_fee for p in programs}
+    avg_fee = max(1, sum(fee_map.values()) / len(fee_map)) if fee_map else 100
+
+    # Build candidate pool with scores
+    candidates: list[dict[str, Any]] = []
+    for entry in all_ranked:
+        prob = entry.get("admission_prob")
+        if prob is None:
+            # Use heuristic: convert acceptance_rate to a rough probability
+            ar = entry.get("acceptance_rate") or 0.15
+            prob = min(ar * 1.5, 0.95)  # rough upward shift for self-selection
+
+        fee = fee_map.get(entry["program_id"], 0)
+        fee_penalty = max(1.0, fee / avg_fee)
+        value = prob / fee_penalty
+
+        candidates.append({
+            **entry,
+            "admission_prob": prob,
+            "fee": fee,
+            "value": value,
+        })
+
+    # Sort by marginal value descending
+    candidates.sort(key=lambda c: -c["value"])
+
+    # Greedy selection with guaranteed bucket coverage
+    selected: list[dict[str, Any]] = []
+    total_fees = 0
+    n_reach = n_target = n_safety = 0
+
+    # First pass: guarantee minimums (1 reach, 2 target, 1 safety)
+    minimums = [("reach", 1), ("target", 2), ("safety", 1)]
+    for bucket, min_count in minimums:
+        bucket_cands = [c for c in candidates if c["category"] == bucket]
+        for c in bucket_cands:
+            if {"reach": n_reach, "target": n_target, "safety": n_safety}[bucket] >= min_count:
+                break
+            new_total = total_fees + c["fee"]
+            if new_total <= budget and len(selected) < n_schools:
+                selected.append(c)
+                total_fees = new_total
+                if bucket == "reach":
+                    n_reach += 1
+                elif bucket == "target":
+                    n_target += 1
+                else:
+                    n_safety += 1
+
+    # Second pass: fill remaining slots by value
+    selected_ids = {s["program_id"] for s in selected}
+    for c in candidates:
+        if len(selected) >= n_schools:
+            break
+        if c["program_id"] in selected_ids:
+            continue
+        if total_fees + c["fee"] > budget:
+            continue
+        selected.append(c)
+        selected_ids.add(c["program_id"])
+        total_fees += c["fee"]
+
+    # Sort final list: reach → target → safety, then by prob desc
+    cat_order = {"reach": 0, "target": 1, "safety": 2}
+    selected.sort(key=lambda c: (cat_order.get(c["category"], 9), -c["admission_prob"]))
+
+    expected_admits = round(sum(c["admission_prob"] for c in selected), 2)
+
+    entries = [
+        PortfolioEntry(
+            program_id=c["program_id"],
+            name=c["name"],
+            university=c["university"],
+            category=c["category"],
+            admission_prob=round(c["admission_prob"], 4),
+            fit_score=c["fit_score"],
+            application_fee=c["fee"],
+            expected_contribution=round(c["admission_prob"], 4),
+        )
+        for c in selected
+    ]
+
+    n_selected = len(entries)
+    summary = (
+        f"{n_selected} schools | Expected admits: {expected_admits:.1f} | "
+        f"Total fees: ${total_fees:,} | "
+        f"Reach: {n_reach}  Target: {n_target}  Safety: {n_safety}"
+    )
+
+    return OptimizedPortfolio(
+        programs=entries,
+        expected_admits=expected_admits,
+        total_fees=total_fees,
+        summary=summary,
+    )

@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from .lr_predictor import predict_prob
+from .lr_predictor import predict_prob_full
 from .models import EvaluationResult, ProgramData, UserProfile
 from .prerequisite_matcher import match_prerequisites
 
@@ -83,13 +83,14 @@ def _compute_fit_score(
     acceptance_rate: float,
     prereq_match_score: float,
     overall_eval_score: float,
+    admission_prob: Optional[float] = None,
 ) -> float:
     """Compute a composite fit score (0-100) for a programme.
 
     Components (out of 100):
         GPA closeness           25 pts
         Prerequisite match      30 pts
-        Acceptance feasibility  20 pts
+        Acceptance feasibility  20 pts  (LR P(admit) when available)
         Academic profile        25 pts
 
     Parameters
@@ -99,11 +100,15 @@ def _compute_fit_score(
     program_avg_gpa:
         Programme's reported average GPA of admits.
     acceptance_rate:
-        Programme's acceptance rate (0-1).
+        Programme's acceptance rate (0-1). Used as fallback when no LR model.
     prereq_match_score:
         Fraction of required prerequisites met (0-1).
     overall_eval_score:
         Overall score from the profile evaluator (0-10).
+    admission_prob:
+        Bias-corrected P(admit) from LR model (0-1). When provided, replaces
+        the acceptance_rate heuristic for the acceptance feasibility component,
+        making the score profile-specific rather than program-average.
     """
     # Handle None values
     program_avg_gpa = program_avg_gpa or 3.80
@@ -122,9 +127,11 @@ def _compute_fit_score(
     prereq_pts = prereq_match_score * 30.0
 
     # Acceptance feasibility: 20 points.
-    # Higher acceptance rate -> easier -> more points.
-    # 0.20+ -> full marks, 0.05 -> 5 pts, linear between.
-    if acceptance_rate >= 0.20:
+    # When LR model is available, use profile-specific P(admit).
+    # Otherwise fall back to the program-level acceptance rate heuristic.
+    if admission_prob is not None:
+        accept_pts = admission_prob * 20.0
+    elif acceptance_rate >= 0.20:
         accept_pts = 20.0
     elif acceptance_rate <= 0.03:
         accept_pts = 2.0
@@ -192,7 +199,9 @@ def rank_schools(
         pmatch = match_prerequisites(profile, prog)
 
         # --- Classification: LR probability first, heuristic fallback ---
-        admission_prob = predict_prob(prog.id, profile.gpa, gre_quant)
+        # Use full prediction (bias-corrected + profile-aware + CI)
+        lr_pred = predict_prob_full(prog.id, profile.gpa, gre_quant, profile)
+        admission_prob = lr_pred.prob if lr_pred is not None else None
 
         if admission_prob is not None:
             # Data-driven: use LR probability thresholds
@@ -212,7 +221,7 @@ def rank_schools(
                 overrides=prog_overrides,
             )
 
-        # Fit score — boost overall_eval_score when projected mode is on
+        # Fit score — profile-specific when LR prob available
         eval_score = evaluation.overall_score
         fit = _compute_fit_score(
             user_gpa=profile.gpa,
@@ -220,6 +229,7 @@ def rank_schools(
             acceptance_rate=prog.acceptance_rate,
             prereq_match_score=pmatch.match_score,
             overall_eval_score=eval_score,
+            admission_prob=admission_prob,
         )
 
         result_entry: dict[str, Any] = {
@@ -232,6 +242,8 @@ def rank_schools(
             "acceptance_rate": prog.acceptance_rate,
             "avg_gpa": prog.avg_gpa,
             "admission_prob": admission_prob,
+            "prob_low": lr_pred.prob_low if lr_pred is not None else None,
+            "prob_high": lr_pred.prob_high if lr_pred is not None else None,
         }
 
         # Add calibration info if available
