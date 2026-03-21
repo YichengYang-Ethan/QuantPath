@@ -29,29 +29,51 @@ QuantPath changes that — and now with **Claude AI integration**, you get a ful
 ```
 $ quantpath evaluate --profile my_profile.yaml
 
-┌─ QuantPath Profile Evaluation ──────────────────┐
-│ Alex Chen | State University | GPA 3.78 | Intl    │
-└──────────────────────────────────────────────────┘
-  Math            8.2/10  ████████░░
-  Statistics      7.5/10  ███████▌░░
-  CS              7.0/10  ███████░░░
-  Finance/Econ    8.0/10  ████████░░
-  GPA             8.5/10  ████████▌░
+┌─ QuantPath Profile Evaluation ──────────────────────┐
+│ Wei Zhang | Zhejiang University | GPA 3.74 | Intl    │
+└──────────────────────────────────────────────────────┘
+  Math            7.3/10  ███████░░░
+  Statistics      7.6/10  ███████▌░░
+  CS              8.2/10  ████████░░
+  Finance/Econ    5.8/10  █████▊░░░░
+  GPA             8.4/10  ████████░░
 
-  OVERALL:        7.8/10  ████████░░  Competitive
+  OVERALL:        7.5/10  ███████▌░░  Competitive
 
-  🎯 Reach:   Princeton MFin, Stanford MCF, Baruch MFE
-  🎯 Target:  CMU MSCF, Berkeley MFE, MIT MFin
-  🎯 Safety:  UCLA MFE, GaTech QCF, Rutgers MQF
+  🎯 Reach:   Baruch MFE, Princeton MFin, CMU MSCF
+  🎯 Target:  Columbia MSFE, Cornell MFE, Berkeley MFE
+  🎯 Safety:  GaTech QCF, UIUC MSFE, Rutgers MQF
 
   ⚠️  Gaps Found:
-     - Stochastic Processes: Missing
-     - PDE: Missing
+     - Stochastic Calculus: Missing (Critical)
+     - ODE: Missing (High)
+     - Stochastic Processes: Missing (High)
+     - Time Series Analysis: Missing (High)
 
   ✅ Strengths:
-     - Real Analysis A-
-     - Strong economics coursework
+     - Calculus A+ (exceptional foundation)
+     - Real Analysis A- (strong mathematical maturity signal)
+     - C++ A (essential for Baruch, CMU, Berkeley)
      - Two quant internships
+```
+
+### School Ranker
+Data-driven reach/target/safety classification using logistic regression trained on 6,984 historical admission records. Shows admission probability for your specific GPA and GRE profile.
+
+```
+$ quantpath list --profile my_profile.yaml
+
+  Category  Program             P(Admit)   Fit Score   Rate
+  ─────────────────────────────────────────────────────────
+  Reach     Baruch MFE          24%        64.1        4%
+  Reach     Princeton MFin      16%        59.3        5%
+  Reach     CMU MSCF            37%        68.7        17%
+  Target    Columbia MSFE       53%        74.2        13%
+  Target    Cornell MFE         61%        76.8        21%
+  Target    Berkeley MFE        49%        72.1        17%
+  Safety    GaTech QCF          74%        81.5        30%
+  Safety    UIUC MSFE           81%        84.3        51%
+  Safety    Rutgers MQF         88%        87.9        86%
 ```
 
 ### Prerequisite Matcher
@@ -61,9 +83,9 @@ Automatically maps your coursework against each program's requirements. Identifi
 $ quantpath match --profile my_profile.yaml --program baruch-mfe
 
   Baruch MFE (Baruch College, CUNY)
-  Match: 85%
-  Missing: None
-  ⚠️  Linear Algebra grade 76 below B+ requirement
+  Match: 71%   P(Admit): 24%
+  Missing: Stochastic Calculus (required)
+  ⚠️  Linear Algebra: B+ (borderline — Baruch prefers A-/A)
 ```
 
 ### Test Requirements
@@ -135,13 +157,14 @@ Identify weaknesses and get prioritized action recommendations.
 ```
 $ quantpath gaps --profile my_profile.yaml
 
-  Factor              Dimension   Score    Priority  Recommended Action
-  Real Analysis       math        Missing  High      Take Real Analysis (required by top-5)
-  Stochastic Proc.    math        Missing  High      Take Stochastic Calculus
-  Time Series         statistics  Missing  High      Take Time Series Analysis
-  ...
+  Factor                Dimension   Score    Priority  Recommended Action
+  Stochastic Calculus   math        Missing  Critical  Self-study Shreve Vol I-II; list on SOP
+  ODE                   math        Missing  High      Take before applying (prerequisite for stoch calc)
+  Stochastic Processes  math        Missing  High      Take STAT 433 or equivalent
+  Time Series           statistics  Missing  High      Take STAT 429 (ARIMA, GARCH models)
+  Finance/Econ          finance     5.8/10   Medium    Add Derivatives or Risk Management course
 
-  Summary:  8 High  2 Medium  1 Low  (11 total gaps)
+  Summary:  1 Critical  3 High  1 Medium  (5 total gaps)
 ```
 
 ## Quick Start
