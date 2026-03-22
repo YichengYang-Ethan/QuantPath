@@ -2,24 +2,21 @@
 
 from __future__ import annotations
 
-import math
 from unittest.mock import patch
 
 import pytest
 
 from core.lr_predictor import (
     AdmitPrediction,
+    _ci_half_width,
     _logit,
     _sigmoid,
-    _ci_half_width,
-    _compute_logit,
+    get_model_stats,
+    has_model,
     predict_prob,
     predict_prob_full,
-    has_model,
-    get_model_stats,
 )
 from core.models import TestScores, UserProfile
-
 
 # ---------------------------------------------------------------------------
 # Minimal fake model fixture (does not require admission_models.json)

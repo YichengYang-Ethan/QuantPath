@@ -632,7 +632,7 @@ def cmd_interview(args: argparse.Namespace) -> None:
     console.print()
 
 
-def _fmt_prob(e: Any) -> str:
+def _fmt_prob(e: object) -> str:
     """Format admission_prob + CI for display, using pre-computed SchoolListEntry fields."""
     prob = getattr(e, "admission_prob", None)
     if prob is None:
