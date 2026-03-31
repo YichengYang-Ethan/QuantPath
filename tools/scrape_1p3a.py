@@ -140,17 +140,25 @@ def _extract_bg_type(text: str) -> str:
     # Specific tier keywords
     tier_patterns = [
         (r"(?:C9|c9|清华|北大|浙大|上交|复旦|中科大|南大|西交|哈工大)", "C9"),
+        (r"(?:美本|美国本科)\s*(?:top\s*10|Top10)", "海本(Top10)"),
+        (r"(?:美本|海本)\s*(?:top\s*20|Top20)", "海本(Top20)"),
+        (r"(?:美本|海本)\s*(?:top\s*30|Top30)", "海本(Top30)"),
+        (r"(?:美本|海本)\s*(?:top\s*50|Top50)", "海本(Top50)"),
+        (r"(?:美本|海本)\s*(?:top\s*100|Top100)", "海本(Top100)"),
         (r"海本\s*(?:top\s*10|Top10|TOP10)", "海本(Top10)"),
         (r"海本\s*(?:top\s*20|Top20|TOP20)", "海本(Top20)"),
         (r"海本\s*(?:top\s*30|Top30|TOP30)", "海本(Top30)"),
         (r"海本\s*(?:top\s*50|Top50|TOP50)", "海本(Top50)"),
         (r"海本\s*(?:top\s*100|Top100|TOP100)", "海本(Top100)"),
-        (r"海本|海外本科|美本|英本|加本|港本|overseas", "海本"),
+        (r"美本|海本|海外本科|英本|加本|港本|overseas|陆本top", "海本"),
         (r"两财一贸", "两财一贸(211)"),
+        (r"中外合办", "211"),
         (r"(?<!非)985", "985"),
         (r"(?<!非)211", "211"),
         (r"双非一本|双非\s*一本", "双非一本"),
-        (r"双非|二本|普通本科", "双非"),
+        (r"双非|二本|普通本科|民办", "双非"),
+        # English school names as tier hints
+        (r"(?i)cornell|cmu|columbia|nyu|berkeley|umich|uiuc", "海本(Top30)"),
     ]
 
     for pattern, tier in tier_patterns:
@@ -169,6 +177,11 @@ def _extract_gpa(text: str) -> tuple[Optional[float], float]:
         r"(?:GPA|gpa|绩点)[：:\s]*(\d+\.?\d*)",
         # Average score 91.8
         r"均分[：:\s]*(\d+\.?\d*)",
+        # Freeform: "gpa只有3.8" or "gpa3.9" or "3.9GPA" or "3.9的GPA"
+        r"[Gg][Pp][Aa]\s*(?:只有|大概|约|是|为|有)?\s*(\d+\.?\d*)",
+        r"(\d\.\d{1,2})\s*(?:的)?[Gg][Pp][Aa]",
+        # Chinese: "绩点89" or "本科绩点3.8"
+        r"(?:本科)?绩点\s*(?:只有|大概|约|是|为)?\s*(\d+\.?\d*)",
     ]
 
     for p in patterns:
@@ -183,7 +196,11 @@ def _extract_gpa(text: str) -> tuple[Optional[float], float]:
                 scale = 5.0
             else:
                 scale = 4.0
-            return gpa, scale
+            # Sanity check
+            if (scale == 4.0 and 2.0 <= gpa <= 4.0) or \
+               (scale == 100.0 and 50 <= gpa <= 100) or \
+               (scale == 5.0 and 2.0 <= gpa <= 5.0):
+                return gpa, scale
 
     return None, 4.0
 
