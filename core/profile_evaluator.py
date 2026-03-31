@@ -293,13 +293,18 @@ def _score_cs(profile: UserProfile) -> tuple[float, list[dict[str, Any]]]:
             0.18,
             _best_score_for_categories(cw, {"data_structures", "algorithms"}),
         ),
-        ("ml_course", 0.10, _best_score_for_category(cw, "machine_learning")),
+        (
+            "ml_course",
+            0.10,
+            _best_score_for_categories(cw, {"machine_learning", "reinforcement_learning"}),
+        ),
         ("numerical_computing", 0.07, _best_score_for_category(cw, "numerical_analysis")),
         (
             "software_engineering",
-            0.10,
+            0.08,
             _best_score_for_categories(cw, {"software_engineering", "database"}),
         ),
+        ("reinforcement_learning", 0.02, _best_score_for_category(cw, "reinforcement_learning")),
         ("is_cs_major", 0.10, cs_major_score),
     ]
     return _weighted_result(factors)

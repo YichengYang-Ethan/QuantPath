@@ -302,7 +302,7 @@ class TestOptimizeCourses:
                 Course("Calc III", "MATH241", "calculus", "B+", level=200),
             ]
         )
-        result = optimize_courses(profile, [], max_courses=30)
+        result = optimize_courses(profile, [], max_courses=35)
         recommended_categories = {r.category for r in result}
         assert "calculus" in recommended_categories
 
@@ -398,7 +398,7 @@ class TestOptimizeCourses:
         programs = [
             _make_program("p1", required=[Prerequisite(category="calculus")]),
         ]
-        result = optimize_courses(profile, programs, max_courses=30)
+        result = optimize_courses(profile, programs, max_courses=35)
         calc_rec = next(
             (r for r in result if r.category == "calculus"), None
         )

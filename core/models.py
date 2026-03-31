@@ -49,6 +49,7 @@ class CourseCategory(str, Enum):
     DATA_STRUCTURES = "data_structures"  # Data Structures
     ALGORITHMS = "algorithms"  # Algorithms, Algorithm Design
     MACHINE_LEARNING = "machine_learning"  # Machine Learning, Deep Learning
+    REINFORCEMENT_LEARNING = "reinforcement_learning"  # RL, MDP, Q-learning, Policy Gradient
     DATABASE = "database"  # Database Systems, SQL
     SOFTWARE_ENGINEERING = "software_engineering"  # OOP, Design Patterns
 
