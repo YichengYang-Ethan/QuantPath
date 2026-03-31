@@ -18,3 +18,5 @@ htmlcov/
 # Personal profiles — keep local only
 profiles/
 *.yaml.local
+data/admissions/raw_1p3a/.browser_state/
+data/admissions/raw_1p3a/*.txt
