@@ -23,7 +23,6 @@ from pathlib import Path
 import gpboost as gpb
 import numpy as np
 import pandas as pd
-from sklearn.calibration import calibration_curve
 from sklearn.metrics import brier_score_loss, roc_auc_score
 from sklearn.model_selection import StratifiedKFold
 
@@ -68,6 +67,8 @@ REAL_ACCEPT_RATES = {
     "northwestern-mfe": 0.30, "usc-msmf": 0.40, "utoronto-mmf": 0.30,
     "toronto-mmf": 0.30,  # alternate name in training data
     "columbia-msfe-econ": 0.05,  # Columbia Business School MS Financial Economics
+    "yale-am": 0.08,  # Yale MA Applied Mathematics
+    "stanford-mse": 0.10,  # Stanford MS Management Science & Engineering
 }
 
 # Program name to ID mapping (from feature_matrix)
@@ -158,10 +159,10 @@ def build_program_maps(df: pd.DataFrame) -> None:
     # We replicate that logic here.
     full_path = _PROJECT_ROOT / "data" / "admissions" / "training_data_full.csv"
     if full_path.exists():
-        full_df = pd.read_csv(full_path, usecols=["program"], dtype=str)
+        _full_df = pd.read_csv(full_path, usecols=["program"], dtype=str)  # noqa: F841
         # Get unique programs from feature_matrix (which has the actual IDs used)
         fm_df = pd.read_csv(fm_path, usecols=["program_id"])
-        actual_pids = sorted(fm_df["program_id"].dropna().unique())
+        _actual_pids = sorted(fm_df["program_id"].dropna().unique())  # noqa: F841
 
         # The encoding in prepare_training_data.py is:
         # sorted(set(PROGRAM_CANONICAL.values())) → enumerate
@@ -299,7 +300,7 @@ def evaluate_cv(df: pd.DataFrame, n_folds: int = 5) -> dict:
 
     # Per-program metrics (top programs)
     program_ids = df["program_id"].values
-    print(f"\n  Per-Program Metrics (programs with 50+ samples):")
+    print("\n  Per-Program Metrics (programs with 50+ samples):")
     for pid in sorted(np.unique(program_ids)):
         mask = program_ids == pid
         if mask.sum() < 50:
@@ -400,7 +401,10 @@ def save_model(
         "training_stats": {
             "n_samples": len(cv_results["predictions"]),
             "n_programs": len(PROGRAM_ID_MAP),
-            "accept_rate": round(np.mean([1 if p > 0.5 else 0 for p in cv_results["predictions"]]), 4),
+            "accept_rate": round(
+                np.mean([1 if p > 0.5 else 0 for p in cv_results["predictions"]]),
+                4,
+            ),
         },
     }
 
@@ -415,7 +419,7 @@ def save_model(
 
     print(f"\n  Model saved to: {output_path}")
     print(f"  Binary saved to: {model_bin_path}")
-    print(f"  Feature importance:")
+    print("  Feature importance:")
     for feat, imp in sorted(feature_importance.items(), key=lambda x: -x[1]):
         bar = "█" * int(imp / max(importance) * 20)
         print(f"    {feat:30} {imp:8.1f}  {bar}")
@@ -460,7 +464,10 @@ def main() -> None:
     print(f"{'─'*60}")
     corrections = compute_bias_corrections(bst, gp_model, df)
     for name, corr in sorted(corrections.items(), key=lambda x: x[1]["real_rate"]):
-        print(f"  {name:25} real={corr['real_rate']:.1%}  train={corr['train_rate']:.1%}  shift={corr['correction']:+.2f}")
+        r = corr["real_rate"]
+        t = corr["train_rate"]
+        s = corr["correction"]
+        print(f"  {name:25} real={r:.1%}  train={t:.1%}  shift={s:+.2f}")
 
     # Save
     print(f"\n{'─'*60}")
@@ -469,7 +476,7 @@ def main() -> None:
     save_model(bst, gp_model, feature_cols, cv_results, corrections, Path(args.output))
 
     print(f"\n{'='*60}")
-    print(f"  Training Complete!")
+    print("  Training Complete!")
     print(f"  AUC: {cv_results['overall_auc']:.4f}  Brier: {cv_results['overall_brier']:.4f}")
     print(f"{'='*60}")
 

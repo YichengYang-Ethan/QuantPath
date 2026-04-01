@@ -1,0 +1,52 @@
+id: yale-am
+name: AM
+full_name: MA in Applied Mathematics
+university: Yale University
+department: Department of Applied Mathematics
+website: https://applied.math.yale.edu/graduate-program
+quantnet_ranking: null
+
+admissions:
+  class_size: 15
+  acceptance_rate: 0.08
+  avg_gpa: 3.9
+  gre_quant_avg: 170
+  international_pct: 0.50
+
+prerequisites:
+  required:
+    - {category: calculus, level: "I-III"}
+    - {category: linear_algebra, level: advanced}
+    - {category: real_analysis, level: required}
+    - {category: probability, level: calculus-based}
+    - {category: programming, level: introductory}
+  recommended:
+    - {category: stochastic_calculus}
+    - {category: pde}
+    - {category: numerical_analysis}
+  languages: [python, matlab]
+
+tests:
+  gre_required: true
+  toefl_min_ibt: 100
+
+deadlines:
+  deadline_cycle: "2026-2027"
+  deadline_rounds:
+    - {round: 1, date: "2027-01-02"}
+
+application:
+  application_fee: 105
+  recommendations: 3
+  interview_type: "Not required"
+
+outcomes:
+  avg_base_salary: 145000
+  tuition_total: 95000
+
+special:
+  - "PhD-track master's — many students continue to PhD"
+  - "Strong connections to Yale School of Management"
+  - "Small cohort, highly selective"
+
+tags: [applied-math, yale, quant-finance, phd-track]

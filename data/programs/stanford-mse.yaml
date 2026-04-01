@@ -1,0 +1,52 @@
+id: stanford-mse
+name: MS MSE
+full_name: MS in Management Science and Engineering
+university: Stanford University
+department: School of Engineering
+website: https://msande.stanford.edu/academics/ms-program
+quantnet_ranking: null
+
+admissions:
+  class_size: 80
+  acceptance_rate: 0.10
+  avg_gpa: 3.85
+  gre_quant_avg: 169
+  international_pct: 0.55
+
+prerequisites:
+  required:
+    - {category: calculus, level: "I-III"}
+    - {category: linear_algebra, level: introductory}
+    - {category: probability, level: calculus-based}
+    - {category: statistics, level: introductory}
+    - {category: programming, level: introductory}
+  recommended:
+    - {category: optimization}
+    - {category: machine_learning}
+    - {category: econometrics}
+  languages: [python, r]
+
+tests:
+  gre_required: false
+  toefl_min_ibt: 100
+
+deadlines:
+  deadline_cycle: "2026-2027"
+  deadline_rounds:
+    - {round: 1, date: "2025-12-01"}
+
+application:
+  application_fee: 125
+  recommendations: 3
+  interview_type: "Not required"
+
+outcomes:
+  avg_base_salary: 155000
+  tuition_total: 110000
+
+special:
+  - "Financial Mathematics track available"
+  - "Access to Stanford GSB courses"
+  - "Strong tech + finance placement"
+
+tags: [management-science, stanford, quant-finance, operations-research]

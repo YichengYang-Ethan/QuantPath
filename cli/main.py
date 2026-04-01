@@ -123,6 +123,18 @@ def cmd_predict(args: argparse.Namespace) -> None:
         profile = load_profile(tmp_path)
     programs = load_all_programs()
 
+    # Focused program list: Tier 0 + Tier 1 only
+    _TIER0 = [
+        "princeton-mfin", "baruch-mfe", "berkeley-mfe",
+        "cmu-mscf", "mit-mfin", "columbia-msfe-econ",
+    ]
+    _TIER1 = [
+        "uchicago-msfm", "nyu-courant", "columbia-msfe",
+        "cornell-mfe", "columbia-mafn", "nyu-tandon-mfe", "gatech-qcf",
+    ]
+    _EXTRA = ["yale-am", "stanford-mcf", "stanford-mse"]
+    _FOCUSED_PROGRAMS = set(_TIER0 + _TIER1 + _EXTRA)
+
     gre_quant = None
     if profile.test_scores:
         gre_quant = getattr(profile.test_scores, "gre_quant", None)
@@ -136,9 +148,11 @@ def cmd_predict(args: argparse.Namespace) -> None:
         )
     )
 
-    # Predict for each program
+    # Predict for focused programs only (Tier 0 + Tier 1)
     results = []
     for prog in programs:
+        if prog.id not in _FOCUSED_PROGRAMS:
+            continue
         pred = predict_prob_v2(prog.id, profile.gpa, gre_quant, profile)
         if pred is None:
             pred = predict_prob_full(prog.id, profile.gpa, gre_quant, profile)

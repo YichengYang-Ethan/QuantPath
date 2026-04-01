@@ -20,17 +20,17 @@
   "feature_importance": {
     "gpa_normalized": 963.8,
     "gre_quant": 337.42,
-    "undergrad_tier_encoded": 1760.86,
-    "intern_score": 622.65,
+    "undergrad_tier_encoded": 1757.73,
+    "intern_score": 605.93,
     "research_score": 424.15,
-    "is_international": 670.08,
+    "is_international": 674.37,
     "is_female": 167.03,
     "major_relevance_score": 5296.15,
     "has_gpa": 21.0,
     "has_gre": 1.97,
-    "has_tier": 236.8,
-    "has_intern": 311.27,
-    "has_nationality": 91.42
+    "has_tier": 239.94,
+    "has_intern": 327.99,
+    "has_nationality": 87.14
   },
   "cv_metrics": {
     "auc": 0.7229,
@@ -40,31 +40,31 @@
       {
         "fold": 1,
         "auc": 0.718048268984967,
-        "brier": 0.20663114467581542,
+        "brier": 0.20663089602360146,
         "n": 2203
       },
       {
         "fold": 2,
         "auc": 0.7344055081697667,
-        "brier": 0.20225833689106448,
+        "brier": 0.20225833688864817,
         "n": 2203
       },
       {
         "fold": 3,
-        "auc": 0.7209468409343239,
-        "brier": 0.20671945197308367,
+        "auc": 0.7209451262640334,
+        "brier": 0.20671997489728017,
         "n": 2202
       },
       {
         "fold": 4,
         "auc": 0.7303762415284571,
-        "brier": 0.2037897602788511,
+        "brier": 0.20378976028079737,
         "n": 2202
       },
       {
         "fold": 5,
         "auc": 0.7127052781838212,
-        "brier": 0.20909004084135577,
+        "brier": 0.2090900408404486,
         "n": 2202
       }
     ]
@@ -256,7 +256,9 @@
     "usc-msmf": 0.4,
     "utoronto-mmf": 0.3,
     "toronto-mmf": 0.3,
-    "columbia-msfe-econ": 0.05
+    "columbia-msfe-econ": 0.05,
+    "yale-am": 0.08,
+    "stanford-mse": 0.1
   },
   "program_id_map": {
     "baruch-mfe": 0,
