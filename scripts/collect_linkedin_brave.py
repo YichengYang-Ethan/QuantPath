@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (C) 2026 MasterAgentAI. All rights reserved.
+# Licensed under AGPL-3.0. See LICENSE for details.
+# SPDX-License-Identifier: AGPL-3.0-only
 """
 Process LinkedIn profile data from Brave Search results into admission records.
 This script processes hardcoded profile data extracted from Brave Search results.

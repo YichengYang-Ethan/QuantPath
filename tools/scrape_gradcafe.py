@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (C) 2026 MasterAgentAI. All rights reserved.
+# Licensed under AGPL-3.0. See LICENSE for details.
+# SPDX-License-Identifier: AGPL-3.0-only
 """
 GradCafe + QuantNet MFE 数据爬虫（无需 Claude API）
 

@@ -1,3 +1,6 @@
+# Copyright (C) 2026 MasterAgentAI. All rights reserved.
+# Licensed under AGPL-3.0. See LICENSE for details.
+# SPDX-License-Identifier: AGPL-3.0-only
 """School ranking and classification engine.
 
 Classifies programmes into reach / target / safety buckets and computes

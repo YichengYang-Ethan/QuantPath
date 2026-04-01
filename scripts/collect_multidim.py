@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (C) 2026 MasterAgentAI. All rights reserved.
+# Licensed under AGPL-3.0. See LICENSE for details.
+# SPDX-License-Identifier: AGPL-3.0-only
 """
 QuantPath Multi-Dimensional MFE Admission Data Collection
 Three pipelines: Reddit, GradCafe, 1Point3Acres offer

@@ -1,0 +1,74 @@
+QuantPath
+Copyright (C) 2026 MasterAgentAI
+https://github.com/MasterAgentAI/QuantPath
+
+This product includes software developed by MasterAgentAI.
+
+
+LICENSE SUMMARY
+===============
+
+Component               License              SPDX Identifier
+--------------------------------------------------------------------
+Source code              AGPL-3.0             AGPL-3.0-only
+Admission data           CC BY-NC-SA 4.0      CC-BY-NC-SA-4.0
+Trained models           CC BY-NC-SA 4.0      CC-BY-NC-SA-4.0
+Program database         CC BY-SA 4.0         CC-BY-SA-4.0
+
+See LICENSE for full details.
+
+
+DATA SOURCES AND ATTRIBUTION
+=============================
+
+Admission data was collected and curated from publicly available sources:
+
+    * GradCafe (https://www.thegradcafe.com/)
+      - Self-reported graduate admission results
+      - Used under fair use for research and educational purposes
+
+    * QuantNet (https://quantnet.com/)
+      - MFE program rankings and admission discussions
+      - Rankings data (C) QuantNet, used with attribution
+
+    * Reddit (https://www.reddit.com/)
+      - r/FinancialEngineering, r/QuantFinance
+      - User-submitted content under Reddit's terms of service
+
+    * 1point3acres (https://www.1point3acres.com/)
+      - Chinese-language admission result reports
+      - Used under fair use for research and educational purposes
+
+    * LinkedIn (https://www.linkedin.com/)
+      - Publicly available alumni profile data (930 records)
+      - Aggregated and anonymized; no individual PII retained
+
+Program information compiled from:
+
+    * QuantNet 2026 MFE Rankings
+    * Official university program websites
+    * Public STEM OPT designation databases
+
+
+THIRD-PARTY SOFTWARE
+====================
+
+This project uses the following open-source libraries:
+
+    GPBoost          - BSD-3-Clause (https://github.com/fabsig/GPBoost)
+    LightGBM         - MIT (https://github.com/microsoft/LightGBM)
+    scikit-learn      - BSD-3-Clause (https://scikit-learn.org/)
+    pandas            - BSD-3-Clause (https://pandas.pydata.org/)
+    NumPy             - BSD-3-Clause (https://numpy.org/)
+    PyYAML            - MIT (https://pyyaml.org/)
+    Click             - BSD-3-Clause (https://click.palletsprojects.com/)
+    Streamlit         - Apache-2.0 (https://streamlit.io/)
+    Anthropic SDK     - MIT (https://github.com/anthropics/anthropic-sdk-python)
+
+
+TRADEMARK NOTICE
+================
+
+"QuantPath" and "MasterAgentAI" are trademarks of MasterAgentAI.
+Use of these names in derivative works requires written permission.
+

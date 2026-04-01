@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Copyright (C) 2026 MasterAgentAI. All rights reserved.
+# Licensed under AGPL-3.0. See LICENSE for details.
+# SPDX-License-Identifier: AGPL-3.0-only
 """
 用历史数据训练每个MFE项目的录取预测模型（逻辑回归）
 输出到 data/models/ 目录（YAML格式，轻量，不依赖pickle）

@@ -1,3 +1,6 @@
+# Copyright (C) 2026 MasterAgentAI. All rights reserved.
+# Licensed under AGPL-3.0. See LICENSE for details.
+# SPDX-License-Identifier: AGPL-3.0-only
 """PDF report generator for QuantPath evaluation results.
 
 Uses fpdf2 to produce a professional multi-page report containing the

@@ -1,0 +1,91 @@
+QuantPath Data and Model License
+=================================
+
+Copyright (C) 2026 MasterAgentAI
+
+
+ADMISSION DATA AND TRAINED MODELS
+----------------------------------
+
+The following assets are licensed under the Creative Commons
+Attribution-NonCommercial-ShareAlike 4.0 International License
+(CC BY-NC-SA 4.0):
+
+    data/admissions/    - Admission records (12,800+ records from
+                          GradCafe, QuantNet, Reddit, 1point3acres)
+    data/models/        - Trained model weights (GPBoost v2 .bin/.json,
+                          logistic regression models)
+
+You are free to:
+
+    Share - copy and redistribute the material in any medium or format
+    Adapt - remix, transform, and build upon the material
+
+Under the following terms:
+
+    Attribution   - You must give appropriate credit, provide a link to
+                    the license, and indicate if changes were made.
+
+    NonCommercial - You may not use the material for commercial purposes.
+                    This includes but is not limited to:
+                    * Selling access to the data or model predictions
+                    * Using the data to train models for commercial products
+                    * Incorporating the data into paid consulting services
+                    * Operating a competing SaaS product using this data
+
+    ShareAlike    - If you remix, transform, or build upon the material,
+                    you must distribute your contributions under the same
+                    license as the original.
+
+    No additional restrictions - You may not apply legal terms or
+                    technological measures that legally restrict others
+                    from doing anything the license permits.
+
+Full legal text:
+    https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+
+SPDX-License-Identifier: CC-BY-NC-SA-4.0
+
+
+PERMITTED USES (examples)
+--------------------------
+
+    * Academic research and papers (with citation)
+    * Personal MFE application planning
+    * Educational use in courses or workshops
+    * Non-commercial open-source projects (with attribution)
+    * Journalism and reporting (with attribution)
+
+
+PROHIBITED USES (examples)
+----------------------------
+
+    * Building a competing admission prediction service
+    * Selling the data or access to model predictions
+    * Training commercial ML models on this data
+    * Incorporating into paid consulting deliverables
+    * Bulk redistribution without attribution
+
+
+PROGRAM DATABASE
+-----------------
+
+Files in data/programs/ are factual compilations from public sources
+and are licensed under CC BY-SA 4.0 (commercial use permitted with
+attribution and ShareAlike).
+
+
+DATA INTEGRITY NOTICE
+----------------------
+
+This dataset contains integrity verification markers. Unauthorized
+redistribution or commercial use can be detected and will be subject
+to legal action under applicable copyright and database protection laws.
+
+
+COMMERCIAL LICENSING
+---------------------
+
+For commercial use of the data or models, contact:
+    https://github.com/MasterAgentAI/QuantPath/issues
+

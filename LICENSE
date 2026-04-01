@@ -1,21 +1,74 @@
-MIT License
+QuantPath - MFE Admission Prediction Engine
+Copyright (C) 2026 MasterAgentAI
 
-Copyright (c) 2026 MasterAgentAI
+This repository contains multiple components under different licenses:
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. SOURCE CODE (AGPL-3.0)
+=========================
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+All source code files (*.py, *.yaml config, *.toml, *.yml workflows,
+*.html, *.css, *.js) in the following directories are licensed under the
+GNU Affero General Public License v3.0:
+
+    core/       cli/        tools/      web/
+    scripts/    tests/      examples/
+
+Full license text: LICENSE-AGPL-3.0
+
+This means:
+- You CAN use, modify, and distribute the code freely.
+- You MUST release your complete source code if you distribute modified
+  versions OR provide the software as a network service (SaaS).
+- You MUST keep this license and copyright notices intact.
+- You MUST state your changes.
+
+SPDX-License-Identifier: AGPL-3.0-only
+
+
+2. DATA AND TRAINED MODELS (CC BY-NC-SA 4.0)
+=============================================
+
+All data files and trained model weights in the following directories
+are licensed under Creative Commons Attribution-NonCommercial-ShareAlike
+4.0 International:
+
+    data/admissions/        (12,800+ admission records)
+    data/models/            (GPBoost .bin and .json model files)
+
+Full license text: data/LICENSE
+
+This means:
+- You CAN use, share, and adapt the data for NON-COMMERCIAL purposes.
+- You MUST give appropriate credit (attribution).
+- You MUST distribute derivatives under the same license (ShareAlike).
+- You may NOT use the data or models for commercial purposes without
+  separate written permission from MasterAgentAI.
+
+SPDX-License-Identifier: CC-BY-NC-SA-4.0
+
+
+3. PROGRAM DATABASE (CC BY-SA 4.0)
+===================================
+
+Program information files in:
+
+    data/programs/          (29 MFE program YAML files)
+
+are licensed under Creative Commons Attribution-ShareAlike 4.0
+International. This data is factual information compiled from public
+sources (QuantNet rankings, official university websites) and may be
+used commercially with attribution.
+
+SPDX-License-Identifier: CC-BY-SA-4.0
+
+
+COMMERCIAL LICENSING
+====================
+
+If you wish to use QuantPath code, data, or models in a commercial
+product or service without complying with the AGPL or CC BY-NC-SA
+terms, contact MasterAgentAI for a commercial license:
+
+    https://github.com/MasterAgentAI/QuantPath/issues
+

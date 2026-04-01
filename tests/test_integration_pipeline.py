@@ -1,3 +1,6 @@
+# Copyright (C) 2026 MasterAgentAI. All rights reserved.
+# Licensed under AGPL-3.0. See LICENSE for details.
+# SPDX-License-Identifier: AGPL-3.0-only
 """Integration tests for the full QuantPath pipeline.
 
 These tests exercise the real data files (programs, admission models) and

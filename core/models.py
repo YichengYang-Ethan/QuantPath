@@ -1,3 +1,6 @@
+# Copyright (C) 2026 MasterAgentAI. All rights reserved.
+# Licensed under AGPL-3.0. See LICENSE for details.
+# SPDX-License-Identifier: AGPL-3.0-only
 """Data models for the QuantPath evaluation engine.
 
 All domain objects are plain dataclasses so they serialise cleanly and

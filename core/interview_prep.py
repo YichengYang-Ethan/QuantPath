@@ -1,3 +1,6 @@
+# Copyright (C) 2026 MasterAgentAI. All rights reserved.
+# Licensed under AGPL-3.0. See LICENSE for details.
+# SPDX-License-Identifier: AGPL-3.0-only
 """Interview preparation module for QuantPath.
 
 Loads and queries a structured database of MFE interview questions, with

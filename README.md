@@ -4,7 +4,8 @@
 
 ![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)
 [![CI](https://github.com/MasterAgentAI/QuantPath/actions/workflows/ci.yml/badge.svg)](https://github.com/MasterAgentAI/QuantPath/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE-AGPL-3.0)
+[![Data: CC BY-NC-SA 4.0](https://img.shields.io/badge/Data-CC_BY--NC--SA_4.0-lightgrey.svg)](data/LICENSE)
 ![Tests](https://img.shields.io/badge/tests-465%20passed-brightgreen.svg)
 ![Data](https://img.shields.io/badge/data-12%2C800%2B%20records-blue.svg)
 ![Programs](https://img.shields.io/badge/programs-29%20MFE-orange.svg)
@@ -204,7 +205,23 @@ QuantPath/
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+This project uses a multi-license structure to balance openness with protection:
+
+| Component | License | Commercial Use |
+|-----------|---------|----------------|
+| **Source code** | [AGPL-3.0](LICENSE-AGPL-3.0) | Allowed if you release your source code (including SaaS) |
+| **Admission data & models** | [CC BY-NC-SA 4.0](data/LICENSE) | Not permitted without written agreement |
+| **Program database** | CC BY-SA 4.0 | Allowed with attribution |
+
+**In plain language:**
+- **Personal use, academic research, and learning** — fully permitted, no restrictions.
+- **Contributing and forking** — welcome under the same license terms.
+- **Building a commercial product or SaaS** — the AGPL requires you to open-source your entire codebase. The data and models cannot be used commercially without a separate license.
+- **Redistribution of data** — allowed for non-commercial purposes with attribution and ShareAlike.
+
+For commercial licensing inquiries, please [open an issue](https://github.com/MasterAgentAI/QuantPath/issues) or contact MasterAgentAI.
+
+See [LICENSE](LICENSE) for the complete terms and [NOTICE](NOTICE) for attribution details.
 
 ---
 
