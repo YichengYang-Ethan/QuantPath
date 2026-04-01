@@ -252,26 +252,88 @@ def _extract_v2_features(
         if hasattr(profile, "is_international"):
             is_international = 1.0 if profile.is_international else 0.0
 
-        # Internship score
+        # Undergrad tier from university name
+        uni = getattr(profile, "university", "").lower()
+        if uni:
+            # T10
+            _T10 = ["mit", "stanford", "caltech", "princeton", "harvard",
+                     "chicago", "penn", "columbia", "berkeley", "yale"]
+            # T20
+            _T20 = ["cornell", "carnegie mellon", "duke", "northwestern",
+                     "johns hopkins", "rice", "vanderbilt", "wash u",
+                     "ucla", "michigan", "cmu"]
+            # T30
+            _T30 = ["nyu", "unc", "illinois", "uiuc", "georgia tech",
+                     "wisconsin", "boston u", "tufts", "ohio state",
+                     "purdue", "uw-madison", "urbana"]
+            # C9
+            _C9 = ["tsinghua", "peking", "zhejiang", "fudan", "sjtu",
+                    "shanghai jiao tong", "ustc", "nanjing", "harbin", "xian jiaotong"]
+            # 985
+            _985 = ["wuhan", "sun yat-sen", "huazhong", "sichuan", "tianjin",
+                     "southeast", "dalian", "chongqing"]
+            # Top international
+            _TOP_INTL = ["iit", "nus", "ntu", "hku", "hkust", "imperial",
+                          "lse", "oxford", "cambridge", "eth", "epfl", "bocconi"]
+
+            if any(s in uni for s in _T10):
+                undergrad_tier = 1.0
+            elif any(s in uni for s in _C9):
+                undergrad_tier = 1.0
+            elif any(s in uni for s in _T20):
+                undergrad_tier = 2.0
+            elif any(s in uni for s in _985):
+                undergrad_tier = 2.0
+            elif any(s in uni for s in _T30):
+                undergrad_tier = 3.0
+            elif any(s in uni for s in _TOP_INTL):
+                undergrad_tier = 2.0
+            else:
+                undergrad_tier = 4.0  # known school but not top tier
+
+        # Internship score — enhanced with company tier detection
+        work_exps = getattr(profile, "work_experience", [])
         n_internships = sum(
-            1 for exp in getattr(profile, "work_experience", [])
+            1 for exp in work_exps
             if isinstance(exp, dict) and exp.get("type") == "internship"
         )
         if n_internships > 0:
-            intern_score = min(n_internships * 3.0, 10.0)
+            # Check for top quant firms
+            all_companies = " ".join(
+                str(exp.get("company", "")) + " " + str(exp.get("description", ""))
+                for exp in work_exps
+            ).lower()
+            _TOP_QUANT = ["citadel", "jane street", "two sigma", "de shaw",
+                           "hrt", "jump", "imc", "optiver", "sig"]
+            _QUANT = ["aqr", "point72", "millennium", "bridgewater",
+                       "worldquant", "quant"]
+            if any(f in all_companies for f in _TOP_QUANT):
+                intern_score = 10.0
+            elif any(f in all_companies for f in _QUANT):
+                intern_score = 8.0
+            else:
+                intern_score = min(n_internships * 3.0, 10.0)
+        elif any(
+            isinstance(exp, dict) and exp.get("type") == "research"
+            for exp in work_exps
+        ):
+            intern_score = 2.0
 
         # Research
         has_paper = any(
             isinstance(p, dict) and p.get("has_paper")
             for p in getattr(profile, "projects", [])
         )
-        has_research = len(getattr(profile, "projects", [])) > 0
+        has_research = len(getattr(profile, "projects", [])) > 0 or any(
+            isinstance(exp, dict) and exp.get("type") == "research"
+            for exp in work_exps
+        )
         if has_paper:
             research_score = 3.0
         elif has_research:
             research_score = 2.0
 
-        # Major relevance
+        # Major relevance — pick the BEST major
         majors = getattr(profile, "majors", [])
         if majors:
             major_lower = " ".join(majors).lower()
@@ -285,6 +347,14 @@ def _extract_v2_features(
                 major_relevance = 0.4
             else:
                 major_relevance = 0.2
+            # Boost for multiple quant majors
+            quant_majors = sum(1 for m in majors if any(
+                kw in m.lower() for kw in ["math", "stat", "computer", "econ", "physics"]
+            ))
+            if quant_majors >= 3:
+                major_relevance = 1.0
+            elif quant_majors >= 2 and major_relevance < 1.0:
+                major_relevance = min(major_relevance + 0.2, 1.0)
 
     # Missing indicators
     has_gpa = 0.0 if gpa is None else 1.0
