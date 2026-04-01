@@ -450,9 +450,32 @@ def predict_prob_v2(
         logit_prob += correction_shift
         prob = _sigmoid(logit_prob)
 
-    # Detect home school BEFORE fallback (used in both v1 and v2 paths)
+    # Program-specific GPA advantage from QuantNet data
+    # If applicant GPA far exceeds program avg, boost P(admit)
+    if gpa is not None and program_id:
+        _PROGRAM_AVG_GPA = {
+            "baruch-mfe": 3.84, "princeton-mfin": 3.90, "cmu-mscf": 3.86,
+            "columbia-msfe": 3.90, "mit-mfin": 3.80, "berkeley-mfe": 3.80,
+            "uchicago-msfm": 3.75, "gatech-qcf": 3.75, "cornell-mfe": 3.80,
+            "nyu-tandon-mfe": 3.83, "nyu-courant": 3.80, "ucla-mfe": 3.75,
+            "uiuc-msfe": 3.70, "ncstate-mfm": 3.65, "rutgers-mqf": 3.60,
+            "bu-msmf": 3.65, "fordham-msqf": 3.60, "jhu-mfm": 3.70,
+            "uwash-cfrm": 3.65, "stevens-mfe": 3.55, "uminn-mfm": 3.60,
+            "umich-mfe": 3.75, "usc-msmf": 3.70, "stanford-mcf": 3.90,
+            "columbia-mafn": 3.85, "northwestern-mfe": 3.75,
+        }
+        avg_gpa = _PROGRAM_AVG_GPA.get(program_id)
+        if avg_gpa:
+            gpa_advantage = gpa - avg_gpa  # e.g., 4.0 - 3.7 = +0.3
+            if gpa_advantage > 0.05:
+                # Scale: +0.1 GPA above avg → +0.2 logit (~+3-5% at midrange)
+                boost = min(gpa_advantage * 2.0, 1.0)  # cap at 1.0 logit
+                logit_p = _logit(max(0.001, min(0.999, prob)))
+                logit_p += boost
+                prob = _sigmoid(logit_p)
+
+    # Detect home school (used in both v1 and v2 paths)
     is_home = False
-    # is a massive advantage (known GPA scale, professor recs, fit signal)
     if profile is not None:
         uni = getattr(profile, "university", "").lower()
         _HOME_SCHOOL_MAP = {
