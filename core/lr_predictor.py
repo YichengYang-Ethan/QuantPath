@@ -356,7 +356,22 @@ def predict_prob_v2(
 
     # Apply bias correction
     corrections = meta.get("bias_corrections", {})
+    real_rates = meta.get("real_accept_rates", {})
     corr = corrections.get(program_id, {})
+
+    # Fallback: if program not in corrections but has a known real rate,
+    # compute correction from raw prediction vs real rate
+    if not corr and program_id in real_rates:
+        real_rate = real_rates[program_id]
+        corr = {"correction": _logit(real_rate) - _logit(0.6), "real_rate": real_rate}
+
+    # Also check alternate name mappings (e.g., utoronto-mmf → toronto-mmf)
+    _NAME_ALIASES = {"utoronto-mmf": "toronto-mmf", "northwestern-mfe": "northwestern-mfe"}
+    if not corr:
+        alias = _NAME_ALIASES.get(program_id)
+        if alias and alias in corrections:
+            corr = corrections[alias]
+
     correction_shift = corr.get("correction", 0.0)
     is_corrected = bool(corr)
 

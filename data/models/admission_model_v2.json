@@ -20,17 +20,17 @@
   "feature_importance": {
     "gpa_normalized": 960.23,
     "gre_quant": 344.88,
-    "undergrad_tier_encoded": 4032.21,
-    "intern_score": 384.21,
+    "undergrad_tier_encoded": 4031.9,
+    "intern_score": 385.09,
     "research_score": 886.33,
-    "is_international": 871.86,
+    "is_international": 876.9,
     "is_female": 220.09,
     "major_relevance_score": 0.0,
     "has_gpa": 13.19,
     "has_gre": 1.03,
-    "has_tier": 981.1,
-    "has_intern": 190.61,
-    "has_nationality": 91.1
+    "has_tier": 981.41,
+    "has_intern": 189.73,
+    "has_nationality": 86.06
   },
   "cv_metrics": {
     "auc": 0.7118,
@@ -40,31 +40,31 @@
       {
         "fold": 1,
         "auc": 0.7061472193761287,
-        "brier": 0.20995048981860379,
+        "brier": 0.20995048981862235,
         "n": 2203
       },
       {
         "fold": 2,
         "auc": 0.7206445038194088,
-        "brier": 0.2062811041025937,
+        "brier": 0.20628110410262132,
         "n": 2203
       },
       {
         "fold": 3,
-        "auc": 0.711206656350067,
-        "brier": 0.2091398045256182,
+        "auc": 0.7112057990149219,
+        "brier": 0.2091399963407452,
         "n": 2202
       },
       {
         "fold": 4,
         "auc": 0.7208195266652664,
-        "brier": 0.20681588908501566,
+        "brier": 0.2068158890862632,
         "n": 2202
       },
       {
         "fold": 5,
         "auc": 0.7020858964081944,
-        "brier": 0.2122792885722305,
+        "brier": 0.21227928856851228,
         "n": 2202
       }
     ]
@@ -178,6 +178,12 @@
       "correction": -2.2908,
       "learned_re": 0.9051
     },
+    "toronto-mmf": {
+      "real_rate": 0.3,
+      "train_rate": 0.5579,
+      "correction": -1.0799,
+      "learned_re": 0.5561
+    },
     "uchicago-msfm": {
       "real_rate": 0.22,
       "train_rate": 0.5271,
@@ -248,7 +254,8 @@
     "umich-mfe": 0.3,
     "northwestern-mfe": 0.3,
     "usc-msmf": 0.4,
-    "utoronto-mmf": 0.3
+    "utoronto-mmf": 0.3,
+    "toronto-mmf": 0.3
   },
   "program_id_map": {
     "baruch-mfe": 0,

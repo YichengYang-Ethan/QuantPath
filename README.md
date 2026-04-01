@@ -27,9 +27,9 @@ $ quantpath evaluate --profile my_profile.yaml
 
   OVERALL:  9.2/10  Top 5-10 MFE Level
 
-  Reach:   UChicago MSFM, Cornell MFE, Berkeley MFE, Princeton MFin, Baruch MFE
-  Target:  UIUC MSFE, UCLA MFE, NYU Tandon MFE, GaTech QCF
-  Safety:  CMU MSCF, MIT MFin, Columbia MAFN, NYU Courant, Rutgers MQF
+  Reach:   Baruch MFE, Princeton MFin, Stanford MCF, Berkeley MFE
+  Target:  CMU MSCF, Columbia MSFE, MIT MFin, UChicago MSFM, Cornell MFE
+  Safety:  GaTech QCF, NYU Tandon MFE, UIUC MSFE, Rutgers MQF
 ```
 
 ## Data
