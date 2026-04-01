@@ -294,28 +294,81 @@ def _extract_v2_features(
             else:
                 undergrad_tier = 4.0  # known school but not top tier
 
-        # Internship score — enhanced with company tier detection
+        # Internship score — tiered by company, country, and role
         work_exps = getattr(profile, "work_experience", [])
-        n_internships = sum(
-            1 for exp in work_exps
+        internship_exps = [
+            exp for exp in work_exps
             if isinstance(exp, dict) and exp.get("type") == "internship"
-        )
-        if n_internships > 0:
-            # Check for top quant firms
-            all_companies = " ".join(
-                str(exp.get("company", "")) + " " + str(exp.get("description", ""))
-                for exp in work_exps
-            ).lower()
-            _TOP_QUANT = ["citadel", "jane street", "two sigma", "de shaw",
-                           "hrt", "jump", "imc", "optiver", "sig"]
-            _QUANT = ["aqr", "point72", "millennium", "bridgewater",
-                       "worldquant", "quant"]
-            if any(f in all_companies for f in _TOP_QUANT):
-                intern_score = 10.0
-            elif any(f in all_companies for f in _QUANT):
-                intern_score = 8.0
-            else:
-                intern_score = min(n_internships * 3.0, 10.0)
+        ]
+
+        if internship_exps:
+            best_score = 0.0
+            for exp in internship_exps:
+                combined = (
+                    str(exp.get("company", "")) + " "
+                    + str(exp.get("description", "")) + " "
+                    + str(exp.get("title", ""))
+                ).lower()
+
+                # US top quant firms
+                _US_TOP_QUANT = [
+                    "citadel", "jane street", "two sigma", "de shaw",
+                    "hrt", "hudson river", "jump", "imc", "optiver",
+                    "sig", "susquehanna", "five rings", "tower research",
+                ]
+                # US quant funds
+                _US_QUANT = [
+                    "aqr", "point72", "millennium", "bridgewater",
+                    "worldquant", "man group", "balyasny", "cubist",
+                    "schonfeld", "verition", "squarepoint", "drw",
+                ]
+                # US bulge bracket banks
+                _US_BB = [
+                    "goldman", "morgan stanley", "jpmorgan", "jp morgan",
+                    "bank of america", "citi", "barclays", "ubs",
+                    "deutsche bank", "bnp", "credit suisse",
+                ]
+                # China top quant / IB
+                _CN_TOP = [
+                    "幻方", "九坤", "明汯", "灵均", "锐天", "衍复",
+                    "三中一华", "中信", "中金", "华泰", "海通",
+                    "citadel cn", "magic formula", "ubiquant",
+                    "high-flyer", "jiukun", "mingshi",
+                ]
+                # US tech
+                _US_TECH = [
+                    "google", "meta", "amazon", "apple", "microsoft",
+                    "nvidia", "tesla",
+                ]
+
+                score = 2.0  # default: generic internship
+                if any(f in combined for f in _US_TOP_QUANT):
+                    score = 10.0
+                elif any(f in combined for f in _US_QUANT):
+                    score = 8.0
+                elif any(f in combined for f in _US_BB):
+                    score = 7.0
+                elif any(f in combined for f in _CN_TOP):
+                    score = 6.0
+                elif any(f in combined for f in _US_TECH):
+                    score = 5.0
+                elif "china" in combined or "cn" in combined:
+                    score = 4.0  # China finance (not top tier)
+
+                # Role boost: quant roles get +1
+                if any(kw in combined for kw in [
+                    "quant", "quantitative", "trading", "alpha",
+                    "strategy", "research", "pricing", "derivatives",
+                ]):
+                    score = min(score + 1.0, 10.0)
+
+                best_score = max(best_score, score)
+
+            # Combine: best single internship + count bonus
+            intern_score = min(
+                best_score + (len(internship_exps) - 1) * 0.5,
+                10.0,
+            )
         elif any(
             isinstance(exp, dict) and exp.get("type") == "research"
             for exp in work_exps

@@ -60,7 +60,12 @@ def _quick_profile_interactive() -> str:
         company = input("    Company name (or Enter to finish): ").strip()
         if not company:
             break
-        internships.append(company)
+        country = input("    Country (us/china/other) [us]: ").strip().lower() or "us"
+        role = (
+            input("    Role (quant/finance/tech/other) [quant]: ").strip().lower()
+            or "quant"
+        )
+        internships.append({"company": company, "country": country, "role": role})
 
     has_paper = input("  Do you have a published paper? (y/n): ").strip().lower()
     has_research = input("  Any research experience? (y/n): ").strip().lower()
@@ -83,8 +88,12 @@ def _quick_profile_interactive() -> str:
 
     if internships:
         lines.append("\nexperience:")
-        for c in internships:
-            lines.append(f'  - {{type: internship, company: "{c}"}}')
+        for intern in internships:
+            c = intern["company"]
+            country = intern["country"]
+            role = intern["role"]
+            desc = f"{role} role, {country}"
+            lines.append(f'  - {{type: internship, company: "{c}", description: "{desc}"}}')
 
     if has_paper == "y" or has_research == "y":
         lines.append("\nprojects:")
