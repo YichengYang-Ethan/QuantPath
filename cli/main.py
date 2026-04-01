@@ -127,13 +127,13 @@ def cmd_predict(args: argparse.Namespace) -> None:
     _TIER0 = [
         "princeton-mfin", "baruch-mfe", "berkeley-mfe",
         "cmu-mscf", "mit-mfin", "columbia-msfe-econ",
+        "yale-am", "stanford-mcf",
     ]
     _TIER1 = [
         "uchicago-msfm", "nyu-courant", "columbia-msfe",
         "cornell-mfe", "columbia-mafn", "nyu-tandon-mfe", "gatech-qcf",
     ]
-    _EXTRA = ["yale-am", "stanford-mcf", "stanford-mse"]
-    _FOCUSED_PROGRAMS = set(_TIER0 + _TIER1 + _EXTRA)
+    _FOCUSED_PROGRAMS = set(_TIER0 + _TIER1)
 
     gre_quant = None
     if profile.test_scores:
