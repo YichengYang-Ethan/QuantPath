@@ -35,8 +35,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
-import numpy as np
-
 if TYPE_CHECKING:
     from .models import UserProfile
 
@@ -214,7 +212,10 @@ def has_model(program_id: str) -> bool:
 # ===================================================================
 
 def _load_v2() -> tuple[Any, dict]:
-    """Load GPBoost v2 model (binary + metadata)."""
+    """Load GPBoost v2 model (binary + metadata).
+
+    Returns (None, None) if gpboost or numpy are not installed.
+    """
     global _v2_model, _v2_meta
     if _v2_model is None and _V2_BIN_PATH.exists():
         try:
@@ -222,7 +223,7 @@ def _load_v2() -> tuple[Any, dict]:
             _v2_model = gpb.Booster(model_file=str(_V2_BIN_PATH))
             with _V2_MODEL_PATH.open(encoding="utf-8") as f:
                 _v2_meta = json.load(f)
-        except ImportError:
+        except (ImportError, OSError):
             _v2_model = None
             _v2_meta = None
     return _v2_model, _v2_meta
@@ -234,8 +235,10 @@ def _extract_v2_features(
     gre: Optional[float],
     profile: Optional["UserProfile"],
     meta: dict,
-) -> Optional[np.ndarray]:
+) -> Optional[Any]:
     """Build the 13-feature vector for GPBoost v2 prediction."""
+    import numpy as np
+
     # Map undergrad tier from profile
     undergrad_tier = np.nan
     intern_score = np.nan
@@ -323,6 +326,8 @@ def predict_prob_v2(
     if bst is None or meta is None:
         # Fallback to v1
         return predict_prob_full(program_id, gpa, gre, profile)
+
+    import numpy as np
 
     # Get program numeric ID
     pid_map = meta.get("program_id_map", {})
