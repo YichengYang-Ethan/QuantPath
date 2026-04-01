@@ -9,7 +9,7 @@
 ![Tests](https://img.shields.io/badge/tests-465%20passed-brightgreen.svg)
 ![Data](https://img.shields.io/badge/data-12%2C800%2B%20records-blue.svg)
 ![Programs](https://img.shields.io/badge/programs-29%20MFE-orange.svg)
-![Model](https://img.shields.io/badge/model-AUC%200.716-brightgreen.svg)
+![Model](https://img.shields.io/badge/model-AUC%200.723-brightgreen.svg)
 
 ---
 
@@ -43,19 +43,19 @@ $ quantpath evaluate --profile my_profile.yaml
 
 ## Model
 
-**v2 (current)**: GPBoost — LightGBM gradient boosting with per-program random intercepts. Trained on 10,525 labeled records, 13 features, 34 programs. AUC 0.716, Brier 0.203 (5-fold CV).
+**v2 (current)**: GPBoost — LightGBM gradient boosting with per-program random intercepts. Trained on 11,012 labeled records, 13 features, 41 programs. AUC 0.723, Brier 0.206 (5-fold CV).
 
 Feature importance (data-driven):
 
 | Rank | Feature | Importance | What It Captures |
 |------|---------|-----------|-----------------|
-| 1 | Major relevance | 4,642 | Math/Stats/CS major vs unrelated |
-| 2 | Undergrad tier | 1,638 | T10/C9/985/211 vs other |
-| 3 | GPA | 927 | Normalized to 4.0 scale |
-| 4 | Intern score | 563 | US top quant → China finance → none |
-| 5 | Research | 410 | Published → significant → none |
-| 6 | GRE Quant | 352 | Low importance (threshold filter) |
-| 7 | International | 342 | Nationality effect |
+| 1 | Major relevance | 5,296 | Math/Stats/CS major vs unrelated |
+| 2 | Undergrad tier | 1,760 | T10/C9/985/211 vs other |
+| 3 | GPA | 964 | Normalized to 4.0 scale |
+| 4 | International | 674 | Nationality effect |
+| 5 | Intern score | 623 | US top quant → China finance → none |
+| 6 | Research | 424 | Published → significant → none |
+| 7 | GRE Quant | 337 | Low importance (threshold filter) |
 
 **v1 (fallback)**: Per-program logistic regression on GPA + GRE Quant with bias correction. 21 trained models. Used when GPBoost is not installed.
 

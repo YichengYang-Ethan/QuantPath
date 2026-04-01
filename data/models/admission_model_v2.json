@@ -20,17 +20,17 @@
   "feature_importance": {
     "gpa_normalized": 963.8,
     "gre_quant": 337.42,
-    "undergrad_tier_encoded": 1757.73,
-    "intern_score": 605.93,
+    "undergrad_tier_encoded": 1759.98,
+    "intern_score": 623.43,
     "research_score": 424.15,
-    "is_international": 674.37,
+    "is_international": 673.66,
     "is_female": 167.03,
     "major_relevance_score": 5296.15,
     "has_gpa": 21.0,
     "has_gre": 1.97,
-    "has_tier": 239.94,
-    "has_intern": 327.99,
-    "has_nationality": 87.14
+    "has_tier": 237.68,
+    "has_intern": 310.49,
+    "has_nationality": 87.84
   },
   "cv_metrics": {
     "auc": 0.7229,
@@ -40,31 +40,31 @@
       {
         "fold": 1,
         "auc": 0.718048268984967,
-        "brier": 0.20663089602360146,
+        "brier": 0.20663104357735507,
         "n": 2203
       },
       {
         "fold": 2,
-        "auc": 0.7344055081697667,
-        "brier": 0.20225833688864817,
+        "auc": 0.7344037954304115,
+        "brier": 0.20225944393195364,
         "n": 2203
       },
       {
         "fold": 3,
         "auc": 0.7209451262640334,
-        "brier": 0.20671997489728017,
+        "brier": 0.20671997695649183,
         "n": 2202
       },
       {
         "fold": 4,
         "auc": 0.7303762415284571,
-        "brier": 0.20378976028079737,
+        "brier": 0.20378976027904985,
         "n": 2202
       },
       {
         "fold": 5,
         "auc": 0.7127052781838212,
-        "brier": 0.2090900408404486,
+        "brier": 0.20908956983214447,
         "n": 2202
       }
     ]
