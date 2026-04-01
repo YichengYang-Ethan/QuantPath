@@ -649,5 +649,67 @@
     "gre_p50": 168.0,
     "gre_p75": 170.0,
     "real_accept_rate": 0.539
+  },
+  "columbia-msfe-econ": {
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "coef": [
+      0.569132,
+      0.075967
+    ],
+    "intercept": -0.184822,
+    "means": [
+      3.6854,
+      167.5527
+    ],
+    "stds": [
+      0.2624,
+      4.1583
+    ],
+    "n_total": 500,
+    "n_accepted": 25,
+    "n_rejected": 475,
+    "accept_rate": 0.05,
+    "real_accept_rate": 0.05,
+    "auc": 0.65,
+    "gpa_p25": 3.7,
+    "gpa_p50": 3.85,
+    "gpa_p75": 3.95,
+    "gre_p25": 167.0,
+    "gre_p50": 169.0,
+    "gre_p75": 170.0
+  },
+  "yale-am": {
+    "features": [
+      "gpa_4scale",
+      "gre_quant"
+    ],
+    "coef": [
+      0.941844,
+      0.03555
+    ],
+    "intercept": -1.754474,
+    "means": [
+      3.7604,
+      167.9357
+    ],
+    "stds": [
+      0.204,
+      3.6754
+    ],
+    "n_total": 56,
+    "n_accepted": 3,
+    "n_rejected": 53,
+    "accept_rate": 0.054,
+    "real_accept_rate": 0.05,
+    "auc": 0.7,
+    "gpa_p25": 3.7,
+    "gpa_p50": 3.85,
+    "gpa_p75": 3.95,
+    "gre_p25": 167.0,
+    "gre_p50": 169.0,
+    "gre_p75": 170.0
   }
 }

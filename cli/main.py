@@ -139,6 +139,18 @@ def cmd_predict(args: argparse.Namespace) -> None:
     if profile.test_scores:
         gre_quant = getattr(profile.test_scores, "gre_quant", None)
 
+    # Check if GPBoost v2 model is available
+    _v2_available = True
+    try:
+        import gpboost  # noqa: F401
+    except ImportError:
+        _v2_available = False
+        console.print(
+            "[yellow]⚠ gpboost not installed — using v1 fallback model "
+            "(fewer programs, lower accuracy).\n"
+            "  Install with: pip install gpboost numpy[/yellow]\n"
+        )
+
     console.print(
         Panel(
             f"{profile.name} | {profile.university} | GPA {profile.gpa}"
@@ -150,6 +162,7 @@ def cmd_predict(args: argparse.Namespace) -> None:
 
     # Predict for focused programs only (Tier 0 + Tier 1)
     results = []
+    skipped = []
     for prog in programs:
         if prog.id not in _FOCUSED_PROGRAMS:
             continue
@@ -157,6 +170,7 @@ def cmd_predict(args: argparse.Namespace) -> None:
         if pred is None:
             pred = predict_prob_full(prog.id, profile.gpa, gre_quant, profile)
         if pred is None:
+            skipped.append(prog.university + " " + (prog.full_name or prog.name))
             continue
 
         prob = pred.prob
@@ -215,9 +229,15 @@ def cmd_predict(args: argparse.Namespace) -> None:
         f"[yellow]{n_target} Target[/yellow] | "
         f"[green]{n_safety} Safety[/green]"
     )
+    if skipped:
+        console.print(
+            f"  [dim]({len(skipped)} programs skipped — no model data: "
+            + ", ".join(skipped) + ")[/dim]"
+        )
     console.print()
+    model_label = "GPBoost v2 model (AUC 0.723)" if _v2_available else "v1 logistic regression fallback"
     console.print(
-        "  [dim]Predictions from GPBoost v2 model (AUC 0.723). "
+        f"  [dim]Predictions from {model_label}. "
         "Based on GPA, university tier, internships, research, nationality, major. "
         "No course-level data required.[/dim]"
     )
