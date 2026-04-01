@@ -47,7 +47,7 @@ def cmd_evaluate(args: argparse.Namespace) -> None:
     # PDF output path requested
     output_path = getattr(args, "output", None)
     if output_path and output_path.endswith(".pdf"):
-        rankings = rank_schools(profile, programs, result, projected=projected)
+        rankings = rank_schools(profile, programs, result, projected=projected, use_v2=True)
         gap_recs = analyze_gaps(result.gaps) if result.gaps else []
 
         from core.report_generator import generate_report
@@ -124,7 +124,7 @@ def cmd_evaluate(args: argparse.Namespace) -> None:
     console.print()
 
     # School recommendations (use projected mode if flag set)
-    rankings = rank_schools(profile, programs, result, projected=projected)
+    rankings = rank_schools(profile, programs, result, projected=projected, use_v2=True)
 
     if rankings.get("reach"):
         reach_names = ", ".join(r["name"] for r in rankings["reach"])

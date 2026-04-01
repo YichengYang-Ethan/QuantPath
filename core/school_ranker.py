@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from .lr_predictor import predict_prob_full
+from .lr_predictor import predict_prob_full, predict_prob_v2
 from .models import EvaluationResult, ProgramData, UserProfile
 from .prerequisite_matcher import match_prerequisites
 
@@ -155,6 +155,7 @@ def rank_schools(
     evaluation: EvaluationResult,
     calibration_overrides: Optional[dict[str, dict[str, Any]]] = None,
     projected: bool = False,
+    **kwargs,
 ) -> dict[str, Any]:
     """Rank and classify a set of programmes for the given applicant.
 
@@ -200,7 +201,11 @@ def rank_schools(
 
         # --- Classification: LR probability first, heuristic fallback ---
         # Use full prediction (bias-corrected + profile-aware + CI)
-        lr_pred = predict_prob_full(prog.id, profile.gpa, gre_quant, profile)
+        # Use v2 (GPBoost) when use_v2=True, otherwise v1 (per-program LR)
+        if kwargs.get("use_v2"):
+            lr_pred = predict_prob_v2(prog.id, profile.gpa, gre_quant, profile)
+        else:
+            lr_pred = predict_prob_full(prog.id, profile.gpa, gre_quant, profile)
         admission_prob = lr_pred.prob if lr_pred is not None else None
 
         if admission_prob is not None:
