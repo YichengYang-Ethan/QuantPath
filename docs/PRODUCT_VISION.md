@@ -16,11 +16,11 @@ A data-driven graduate program application decision engine. Applicants input the
 
 ## Founder
 
-The founder is a UIUC undergraduate (CS + Economics + Statistics, GPA 4.0, Class of 2027) with quantitative research experience and a solo-authored paper on prediction market pricing. Currently applying to top MFE programs.
+Ethan Yang (杨毅诚) — UIUC undergraduate (CS + Economics + Statistics triple major, GPA 4.0, Class of 2027). Quantitative Researcher at Square Kettle LLC. Solo-authored prediction market pricing paper (Wang Transform, submitted to FMA 2026). Applying Fall 2027 MFE.
 
-The founder's own application process is the first use case and best content marketing asset.
+Ethan's own application process is the first use case and best content marketing asset.
 
-Open-source track record: Multiple open-source projects with significant community traction..
+Open-source track record: Open-source track record: oracle3 (126+ stars), clawdfolio (PyPI), Coinjure (12,000+ lines contributed)..
 
 ---
 
