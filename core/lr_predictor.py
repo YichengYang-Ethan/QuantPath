@@ -430,10 +430,12 @@ def predict_prob_v2(
     corr = corrections.get(program_id, {})
 
     # Fallback: if program not in corrections but has a known real rate,
-    # compute correction from raw prediction vs real rate
+    # compute correction using global average training accept rate
     if not corr and program_id in real_rates:
         real_rate = real_rates[program_id]
-        corr = {"correction": _logit(real_rate) - _logit(0.6), "real_rate": real_rate}
+        # Use actual global training accept rate (computed from training data)
+        global_train_rate = meta.get("training_stats", {}).get("accept_rate", 0.625)
+        corr = {"correction": _logit(real_rate) - _logit(global_train_rate), "real_rate": real_rate}
 
     # Also check alternate name mappings (e.g., utoronto-mmf → toronto-mmf)
     _NAME_ALIASES = {"utoronto-mmf": "toronto-mmf", "northwestern-mfe": "northwestern-mfe"}
@@ -450,74 +452,6 @@ def predict_prob_v2(
         logit_prob += correction_shift
         prob = _sigmoid(logit_prob)
 
-    # Program-specific GPA advantage from QuantNet data
-    # If applicant GPA far exceeds program avg, boost P(admit)
-    if gpa is not None and program_id:
-        _PROGRAM_AVG_GPA = {
-            "baruch-mfe": 3.84, "princeton-mfin": 3.90, "cmu-mscf": 3.86,
-            "columbia-msfe": 3.90, "mit-mfin": 3.80, "berkeley-mfe": 3.80,
-            "uchicago-msfm": 3.75, "gatech-qcf": 3.75, "cornell-mfe": 3.80,
-            "nyu-tandon-mfe": 3.83, "nyu-courant": 3.80, "ucla-mfe": 3.75,
-            "uiuc-msfe": 3.70, "ncstate-mfm": 3.65, "rutgers-mqf": 3.60,
-            "bu-msmf": 3.65, "fordham-msqf": 3.60, "jhu-mfm": 3.70,
-            "uwash-cfrm": 3.65, "stevens-mfe": 3.55, "uminn-mfm": 3.60,
-            "umich-mfe": 3.75, "usc-msmf": 3.70, "stanford-mcf": 3.90,
-            "columbia-mafn": 3.85, "northwestern-mfe": 3.75,
-        }
-        avg_gpa = _PROGRAM_AVG_GPA.get(program_id)
-        if avg_gpa:
-            gpa_advantage = gpa - avg_gpa  # e.g., 4.0 - 3.7 = +0.3
-            if gpa_advantage > 0.05:
-                # Scale: +0.1 GPA above avg → +0.2 logit (~+3-5% at midrange)
-                boost = min(gpa_advantage * 2.0, 1.0)  # cap at 1.0 logit
-                logit_p = _logit(max(0.001, min(0.999, prob)))
-                logit_p += boost
-                prob = _sigmoid(logit_p)
-
-    # Detect home school (used in both v1 and v2 paths)
-    is_home = False
-    if profile is not None:
-        uni = getattr(profile, "university", "").lower()
-        _HOME_SCHOOL_MAP = {
-            "illinois": "uiuc-msfe",
-            "uiuc": "uiuc-msfe",
-            "urbana": "uiuc-msfe",
-            "carnegie mellon": "cmu-mscf",
-            "cmu": "cmu-mscf",
-            "columbia": ["columbia-msfe", "columbia-mafn"],
-            "nyu": ["nyu-tandon-mfe", "nyu-courant"],
-            "cornell": "cornell-mfe",
-            "georgia tech": "gatech-qcf",
-            "gatech": "gatech-qcf",
-            "berkeley": "berkeley-mfe",
-            "uc berkeley": "berkeley-mfe",
-            "ucla": "ucla-mfe",
-            "uchicago": "uchicago-msfm",
-            "chicago": "uchicago-msfm",
-            "michigan": "umich-mfe",
-            "rutgers": "rutgers-mqf",
-            "boston university": "bu-msmf",
-            "toronto": ["toronto-mmf", "utoronto-mmf"],
-            "mit": "mit-mfin",
-            "princeton": "princeton-mfin",
-            "stanford": "stanford-mcf",
-        }
-        is_home = False
-        for kw, progs in _HOME_SCHOOL_MAP.items():
-            if kw in uni:
-                if isinstance(progs, str):
-                    progs = [progs]
-                if program_id in progs:
-                    is_home = True
-                    break
-
-        if is_home:
-            # Home school applicants with strong profiles get a significant boost
-            # Typical home advantage: +15-25% acceptance rate
-            logit_prob = _logit(max(0.001, min(0.999, prob)))
-            logit_prob += 0.8  # ~+15% at p=0.5, ~+10% at p=0.7
-            prob = _sigmoid(logit_prob)
-
     # Per-program quality gate: if v2 AUC for this program is < 0.50,
     # the model is worse than random — fall back to v1 if available
     _WEAK_V2_PROGRAMS = {
@@ -528,17 +462,6 @@ def predict_prob_v2(
     if program_id in _WEAK_V2_PROGRAMS:
         v1_result = predict_prob_full(program_id, gpa, gre, profile)
         if v1_result is not None:
-            # Apply home school boost to v1 result too
-            if is_home:
-                boosted_logit = _logit(max(0.001, min(0.999, v1_result.prob)))
-                boosted_logit += 0.8
-                boosted_prob = round(_sigmoid(boosted_logit), 4)
-                return AdmitPrediction(
-                    prob=boosted_prob,
-                    prob_low=v1_result.prob_low,
-                    prob_high=min(0.999, v1_result.prob_high + 0.1),
-                    is_bias_corrected=v1_result.is_bias_corrected,
-                )
             return v1_result
 
     prob = round(max(0.001, min(0.999, prob)), 4)
