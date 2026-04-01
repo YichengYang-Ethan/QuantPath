@@ -37,6 +37,99 @@ def bar(score: float, width: int = 10) -> str:
     return "█" * filled + "░" * (width - filled)
 
 
+def cmd_predict(args: argparse.Namespace) -> None:
+    """Pure v2 model prediction — reach/target/safety without course evaluation."""
+    from core.lr_predictor import predict_prob_v2, predict_prob_full
+
+    profile = load_profile(args.profile)
+    programs = load_all_programs()
+
+    gre_quant = None
+    if profile.test_scores:
+        gre_quant = getattr(profile.test_scores, "gre_quant", None)
+
+    console.print(
+        Panel(
+            f"{profile.name} | {profile.university} | GPA {profile.gpa}"
+            + (" | International" if profile.is_international else ""),
+            title="QuantPath Admission Prediction (v2 Model)",
+            style="bold",
+        )
+    )
+
+    # Predict for each program
+    results = []
+    for prog in programs:
+        pred = predict_prob_v2(prog.id, profile.gpa, gre_quant, profile)
+        if pred is None:
+            pred = predict_prob_full(prog.id, profile.gpa, gre_quant, profile)
+        if pred is None:
+            continue
+
+        prob = pred.prob
+        if prob >= 0.70:
+            cat = "safety"
+        elif prob >= 0.40:
+            cat = "target"
+        else:
+            cat = "reach"
+
+        results.append({
+            "program_id": prog.id,
+            "name": prog.full_name or prog.name,
+            "university": prog.university,
+            "prob": prob,
+            "prob_low": pred.prob_low,
+            "prob_high": pred.prob_high,
+            "category": cat,
+            "corrected": pred.is_bias_corrected,
+            "acceptance_rate": prog.acceptance_rate,
+        })
+
+    results.sort(key=lambda x: -x["prob"])
+
+    # Display by category
+    for cat, label, style in [
+        ("reach", "Reach", "red"),
+        ("target", "Target", "yellow"),
+        ("safety", "Safety", "green"),
+    ]:
+        entries = [r for r in results if r["category"] == cat]
+        if not entries:
+            continue
+
+        table = Table(title=f"{label} Schools", style=style, show_lines=False)
+        table.add_column("Program", min_width=20)
+        table.add_column("University", min_width=20)
+        table.add_column("P(Admit)", justify="right", min_width=12)
+        table.add_column("Real Rate", justify="right", min_width=10)
+
+        for e in entries:
+            prob_str = f"{e['prob']:.0%} [{e['prob_low']:.0%}-{e['prob_high']:.0%}]"
+            rate_str = f"{e['acceptance_rate']:.0%}" if e["acceptance_rate"] else "—"
+            table.add_row(e["name"], e["university"], prob_str, rate_str)
+
+        console.print(table)
+        console.print()
+
+    # Summary
+    n_reach = sum(1 for r in results if r["category"] == "reach")
+    n_target = sum(1 for r in results if r["category"] == "target")
+    n_safety = sum(1 for r in results if r["category"] == "safety")
+    console.print(
+        f"  {n_reach + n_target + n_safety} programs: "
+        f"[red]{n_reach} Reach[/red] | "
+        f"[yellow]{n_target} Target[/yellow] | "
+        f"[green]{n_safety} Safety[/green]"
+    )
+    console.print()
+    console.print(
+        "  [dim]Predictions from GPBoost v2 model (AUC 0.723). "
+        "Based on GPA, university tier, internships, research, nationality, major. "
+        "No course-level data required.[/dim]"
+    )
+
+
 def cmd_evaluate(args: argparse.Namespace) -> None:
     """Evaluate a user profile against MFE programs."""
     profile = load_profile(args.profile)
@@ -1531,6 +1624,13 @@ def main() -> None:
         "--gre", type=int, help="Hypothetical GRE Quant (default: current)"
     )
 
+    # predict (new — pure v2 model, no course evaluation needed)
+    p_predict = subparsers.add_parser(
+        "predict",
+        help="Predict reach/target/safety using v2 model (no detailed transcript needed)",
+    )
+    p_predict.add_argument("--profile", "-p", required=True, help="Path to profile YAML")
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -1539,6 +1639,7 @@ def main() -> None:
 
     commands = {
         "evaluate": cmd_evaluate,
+        "predict": cmd_predict,
         "match": cmd_match,
         "tests": cmd_tests,
         "timeline": cmd_timeline,
