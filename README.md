@@ -54,21 +54,21 @@ $ quantpath predict --profile my_profile.yaml
 
 ## Model
 
-**v2 (current)**: GPBoost -- LightGBM gradient boosting with per-program random intercepts. Trained on 11,100+ labeled records, 13 features, 31 programs. AUC 0.723, Brier 0.206 (5-fold CV).
+**v1 (primary)**: Per-program logistic regression on GPA + GRE Quant with bias correction and enhanced profile adjustments. 27 trained models covering all 15 focused programs.
 
-Feature importance (data-driven):
+Profile adjustments (logit space, data-calibrated):
 
-| Rank | Feature | Importance | What It Captures |
-|------|---------|-----------|-----------------|
-| 1 | Major relevance | 5,296 | Math/Stats/CS major vs unrelated |
-| 2 | Undergrad tier | 1,760 | T10/C9/985/211 vs other |
-| 3 | GPA | 964 | Normalized to 4.0 scale |
-| 4 | International | 674 | Nationality effect |
-| 5 | Intern score | 623 | US top quant → China finance → none |
-| 6 | Research | 424 | Published → significant → none |
-| 7 | GRE Quant | 337 | Low importance (threshold filter) |
+| Signal | Adjustment | Example |
+|--------|-----------|---------|
+| Undergrad tier | +0.30 to +0.80 | T10 +0.80, C9 +0.70, T20 +0.50 |
+| Internship quality | +0.15 to +0.80 | Jane Street +0.80, Goldman +0.45, generic +0.15 |
+| Internship count | +0.15/each | Diminishing, up to 3 extra |
+| Published paper | +0.40 | Conference or journal paper |
+| Research experience | +0.20 | Research project without publication |
+| Major relevance | +0.15 to +0.30 | Dual quant major +0.30, single +0.15 |
+| International | -0.25 | Non-US nationality |
 
-**v1 (fallback)**: Per-program logistic regression on GPA + GRE Quant with bias correction. 23 trained models. Used when GPBoost is not installed.
+**v2 (fallback)**: GPBoost -- LightGBM gradient boosting with per-program random intercepts. Trained on 11,100+ labeled records, 13 features, 31 programs. AUC 0.723, Brier 0.206 (5-fold CV). Used for programs without a v1 model.
 
 **Bias correction**: Self-reported data has survivor bias (65% accept rate in data vs 4-30% real). The model replaces the biased intercept with logit(*r*) where *r* is the official acceptance rate, preserving learned feature slopes ([King & Zeng 2001](https://gking.harvard.edu/files/abs/0s-abs.shtml)).
 
@@ -204,7 +204,7 @@ QuantPath/
 ├── data/
 │   ├── programs/            # 31 program YAML files
 │   ├── admissions/          # 13,100+ records (CSV + JSON)
-│   └── models/              # GPBoost v2 (.bin + .json) + 23 LR models
+│   └── models/              # 27 LR models (primary) + GPBoost v2 (.bin + .json)
 └── tests/                   # 465 tests, <1s runtime
 ```
 
