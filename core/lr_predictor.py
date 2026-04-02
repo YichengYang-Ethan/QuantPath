@@ -143,6 +143,8 @@ def _profile_adjustment(profile: "UserProfile") -> float:
         adj += _ADJ_INTERNATIONAL
 
     # --- Undergrad tier (+0 to +0.80) ---
+    # US schools carry significantly more weight than Chinese schools
+    # in US MFE admissions (familiarity, grading system, network).
     uni = getattr(profile, "university", "").lower()
     if uni:
         _T10 = ["mit", "stanford", "caltech", "princeton", "harvard",
@@ -156,19 +158,19 @@ def _profile_adjustment(profile: "UserProfile") -> float:
         _985 = ["wuhan", "sun yat-sen", "huazhong", "sichuan", "tianjin",
                  "southeast", "dalian"]
         _TOP_INTL = ["imperial", "lse", "oxford", "cambridge", "eth",
-                      "epfl", "nus", "hku", "hkust"]
+                      "epfl"]
         if any(s in uni for s in _T10):
             adj += 0.80
-        elif any(s in uni for s in _C9):
-            adj += 0.70
         elif any(s in uni for s in _T20):
-            adj += 0.50
-        elif any(s in uni for s in _985):
-            adj += 0.40
+            adj += 0.65
         elif any(s in uni for s in _TOP_INTL):
             adj += 0.50
         elif any(s in uni for s in _T30):
-            adj += 0.30
+            adj += 0.40
+        elif any(s in uni for s in _C9):
+            adj += 0.35
+        elif any(s in uni for s in _985):
+            adj += 0.15
 
     # --- Internship quality (+0 to +1.20) ---
     work_exps = getattr(profile, "work_experience", [])
