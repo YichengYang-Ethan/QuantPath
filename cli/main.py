@@ -2208,7 +2208,19 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command is None:
-        parser.print_help()
+        console.print(
+            "\n  [bold]Welcome to QuantPath![/bold] "
+            "MFE admission prediction & planning toolkit.\n"
+        )
+        console.print("  [green]Get started:[/green]")
+        console.print("    quantpath predict                 "
+                       "[dim]← start here (interactive, no setup needed)[/dim]")
+        console.print("    quantpath programs                "
+                       "[dim]← browse all 31 MFE programs[/dim]")
+        console.print("    quantpath compare --programs X,Y  "
+                       "[dim]← side-by-side comparison[/dim]")
+        console.print()
+        console.print("  [dim]For full command list: quantpath --help[/dim]\n")
         return
 
     commands = {
