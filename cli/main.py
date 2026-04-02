@@ -342,26 +342,84 @@ def _classify_major(majors: list) -> str:
     return "Other"
 
 
+def _ask_detail(field: str, raw: str, anonymous: str) -> str:
+    """Ask user whether to share the original value or the anonymous version."""
+    try:
+        choice = input(
+            f"    {field}: share \"{raw}\" or anonymous \"{anonymous}\"? "
+            "(o=original / a=anonymous / s=skip) [o]: "
+        ).strip().lower() or "o"
+    except (EOFError, KeyboardInterrupt):
+        choice = "a"
+    if choice == "s":
+        return ""
+    if choice == "a":
+        return anonymous
+    return raw
+
+
 def _submit_contribution(profile, results: list) -> None:
-    """Anonymize profile + predictions and submit as a GitHub issue."""
+    """Build contribution with per-field privacy choices and submit."""
     import subprocess
 
-    # Build anonymized profile
+    console.print(
+        "\n  [bold]Choose what to share for each field[/bold]"
+    )
+    console.print(
+        "  [dim]o = original (more useful for model), "
+        "a = anonymous, s = skip[/dim]\n"
+    )
+
     anon_lines = []
+
+    # GPA — always included (not PII)
     anon_lines.append(f"- GPA: {profile.gpa}")
-    gre = getattr(profile.test_scores, "gre_quant", None) if profile.test_scores else None
+
+    gre = (
+        getattr(profile.test_scores, "gre_quant", None)
+        if profile.test_scores else None
+    )
     if gre:
         anon_lines.append(f"- GRE Quant: {gre}")
-    anon_lines.append(
-        f"- University Tier: {_classify_university(profile.university)}"
-    )
-    anon_lines.append(f"- Major Category: {_classify_major(profile.majors)}")
+
+    # University
+    uni_tier = _classify_university(profile.university)
+    if profile.university:
+        val = _ask_detail("University", profile.university, uni_tier)
+        if val:
+            anon_lines.append(f"- University: {val}")
+
+    # Majors
+    major_cat = _classify_major(profile.majors)
+    if profile.majors:
+        raw_majors = ", ".join(profile.majors)
+        val = _ask_detail("Majors", raw_majors, major_cat)
+        if val:
+            anon_lines.append(f"- Majors: {val}")
+
+    # International
     anon_lines.append(
         f"- International: {'yes' if profile.is_international else 'no'}"
     )
-    anon_lines.append(
-        f"- Internships: {_classify_internships(profile.work_experience)}"
-    )
+
+    # Internships
+    internships = [
+        e for e in profile.work_experience
+        if isinstance(e, dict) and e.get("type") == "internship"
+    ]
+    intern_anon = _classify_internships(profile.work_experience)
+    if internships:
+        raw_interns = "; ".join(
+            str(e.get("company", "")) + " (" + str(e.get("description", "")) + ")"
+            for e in internships
+        )
+        val = _ask_detail("Internships", raw_interns, intern_anon)
+        if val:
+            anon_lines.append(f"- Internships: {val}")
+    else:
+        anon_lines.append("- Internships: None")
+
+    # Research
     has_paper = any(
         isinstance(p, dict) and p.get("has_paper")
         for p in profile.projects
@@ -377,11 +435,10 @@ def _submit_contribution(profile, results: list) -> None:
     # Prediction results
     pred_lines = []
     for r in sorted(results, key=lambda x: -x["prob"]):
-        cat = r["category"]
         pred_lines.append(
             f"- {r['name']} ({r['university']}): "
             f"{r['prob']:.0%} [{r['prob_low']:.0%}-{r['prob_high']:.0%}] "
-            f"— {cat}"
+            f"— {r['category']}"
         )
 
     # Outcome checklist
@@ -389,9 +446,8 @@ def _submit_contribution(profile, results: list) -> None:
     for r in sorted(results, key=lambda x: -x["prob"]):
         outcome_lines.append(f"- [ ] {r['name']} ({r['university']}): pending")
 
-    # Show preview
-    console.print("\n  [bold]Data to be shared (anonymized):[/bold]")
-    console.print()
+    # Show final preview
+    console.print("\n  [bold]Final data to be shared:[/bold]\n")
     for line in anon_lines:
         console.print(f"    {line}")
     console.print()
@@ -405,7 +461,7 @@ def _submit_contribution(profile, results: list) -> None:
         return
 
     body = (
-        "## Anonymized Profile\n\n"
+        "## Profile\n\n"
         + "\n".join(anon_lines)
         + "\n\n## Prediction Results\n\n"
         + "\n".join(pred_lines)
