@@ -330,14 +330,22 @@ def _classify_major(majors: list) -> str:
     """Map majors to anonymous category."""
     if not majors:
         return "Unknown"
-    combined = " " + " ".join(majors).lower() + " "
-    quant_kw = ["math", "stat", "physics", "computer"]
-    n_quant = sum(1 for kw in quant_kw if kw in combined)
+    _QUANT = [
+        "math", "mathematics", "applied math",
+        "statistics", "stats", "stat",
+        "physics",
+        "computer science", "computer", "computing", "cs",
+    ]
+    _ECON = ["econ", "economics", "finance", "financial"]
+    n_quant = sum(
+        1 for m in majors
+        if any(kw == m.lower() or kw in m.lower().split() for kw in _QUANT)
+    )
     if n_quant >= 2:
         return "Multi-quant (math/stats/CS)"
     if n_quant >= 1:
         return "Quant-related"
-    if any(kw in combined for kw in ["econ", "finance"]):
+    if any(any(kw in m.lower() for kw in _ECON) for m in majors):
         return "Econ/Finance"
     return "Other"
 
