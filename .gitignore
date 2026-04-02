@@ -22,3 +22,6 @@ data/admissions/raw_1p3a/.browser_state/
 data/admissions/raw_1p3a/*.txt
 profiles/*.yaml
 !profiles/README.md
+
+# Local contribution drafts (saved when gh submit fails)
+data/contributions/

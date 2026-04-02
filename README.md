@@ -78,6 +78,7 @@ $ quantpath predict --profile my_profile.yaml
 | `quantpath tests` | GRE/TOEFL requirements across all programs |
 | `quantpath programs` | Full program database with rankings and stats |
 | `quantpath interview` | Practice questions by category and difficulty |
+| `quantpath contribute-upload` | Upload locally saved contribution data to GitHub |
 
 ### AI Tools
 
@@ -199,9 +200,31 @@ QuantPath/
 ## Contributing
 
 1. **Add/update program data** — PRs to `data/programs/` with updated deadlines or new programs
-2. **Submit admission results** — Add your own data to improve the model
+2. **Submit admission results** — see [Contributing Your Data](#contributing-your-data) below
 3. **Report data errors** — Open issues for outdated program information
 4. **Feature requests** — Tell us what would help your application process
+
+### Contributing Your Data
+
+After running `quantpath predict`, you'll be asked whether to contribute your anonymized data. This is the #1 way to improve prediction accuracy for everyone.
+
+**Option A — Automatic (recommended):**
+```bash
+quantpath predict --profile my_profile.yaml
+# Answer "y" when prompted → auto-submits to GitHub
+```
+
+**Option B — Browser (no GitHub CLI needed):**
+
+If you don't have `gh` installed, the CLI will save your data locally and offer to open a pre-filled GitHub issue page in your browser. Just click "Submit new issue".
+
+**Option C — Upload later:**
+```bash
+# If data was saved locally (e.g. gh was not available), submit it later:
+quantpath contribute-upload
+```
+
+**Privacy:** All data is anonymized before submission — university names are replaced with tiers (e.g. "US T30"), company names with categories (e.g. "top quant"). You choose per-field whether to share the original value or the anonymized version.
 
 ## License
 
