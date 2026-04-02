@@ -92,27 +92,39 @@ $ quantpath predict --profile my_profile.yaml
 
 ## Quick Start
 
+### Step 1 — Install and predict (< 2 minutes)
+
 ```bash
 git clone https://github.com/MasterAgentAI/QuantPath.git
 cd QuantPath && pip3 install -e .
 
-# Create profile from the example template
-cp examples/sample_profile.yaml my_profile.yaml
-# Edit with your courses, GPA, experience
-
-# Predict admission probability across 15 focused programs (primary entry point)
-quantpath predict --profile my_profile.yaml
-
-# Detailed course evaluation (needs full transcript)
-quantpath evaluate --profile my_profile.yaml
-quantpath gaps     --profile my_profile.yaml
+# Interactive — answers a few questions, no file needed
+quantpath predict
 ```
 
-For AI-powered analysis:
+This gives you P(admit) for 15 programs, classified as reach/target/safety. Your profile is automatically saved to `profiles/` for reuse.
+
+### Step 2 — Deeper analysis (optional, add courses)
+
+The saved profile works for `predict`, but for course-level evaluation (5-dimension score, gap analysis, course recommendations), add your transcript:
+
+```bash
+# Edit the profile saved in Step 1 and add your courses
+# (see examples/sample_profile.yaml for the full format)
+vim profiles/your_name.yaml
+
+# Then run detailed analysis
+quantpath evaluate --profile profiles/your_name.yaml
+quantpath gaps     --profile profiles/your_name.yaml
+quantpath optimize --profile profiles/your_name.yaml
+```
+
+### AI-powered advisory report (optional)
+
 ```bash
 pip3 install anthropic
 export ANTHROPIC_API_KEY=your_key
-python tools/advisor.py --profile my_profile.yaml --save report.md
+python tools/advisor.py --profile profiles/your_name.yaml --save report.md
 ```
 
 ## Programs (15 Focused — Tier 0 + Tier 1)

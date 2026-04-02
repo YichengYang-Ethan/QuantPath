@@ -102,6 +102,16 @@ def _quick_profile_interactive() -> str:
         elif has_research == "y":
             lines.append('  - {name: "Research", description: "Research experience"}')
 
+    lines.append(
+        "\n# --- Add courses below for deeper analysis (evaluate/gaps/optimize) ---"
+        "\n# See examples/sample_profile.yaml for the full format."
+        "\n# courses:"
+        '\n#   - {code: "MATH 310", name: "Linear Algebra",'
+        " category: linear_algebra, grade: \"A\", level: 300}"
+        '\n#   - {code: "STAT 420", name: "Probability",'
+        " category: probability, grade: \"A-\", level: 400}"
+    )
+
     yaml_content = "\n".join(lines)
 
     profiles_dir = os.path.join(os.path.dirname(__file__), "..", "profiles")
