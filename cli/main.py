@@ -337,11 +337,13 @@ def _classify_internships(work_exp: list) -> str:
 
     categories = []
     for exp in internships:
-        combined = (
-            str(exp.get("company", "")) + " "
-            + str(exp.get("description", "")) + " "
-            + str(exp.get("title", ""))
+        combined = " ".join(
+            str(exp.get(k, ""))
+            for k in ("company", "description", "title", "country", "location")
         ).lower()
+        is_china = "china" in combined or "cn" in combined
+        is_us = " us " in f" {combined} " or "united states" in combined
+
         if any(f in combined for f in _TOP_QUANT):
             categories.append("top quant (US)")
         elif any(f in combined for f in _QUANT):
@@ -349,12 +351,16 @@ def _classify_internships(work_exp: list) -> str:
         elif any(f in combined for f in _BB):
             categories.append("bulge bracket (US)")
         elif "quant" in combined or "trading" in combined:
-            if "china" in combined or "cn" in combined:
+            if is_china:
                 categories.append("quant (China)")
+            elif is_us:
+                categories.append("quant (US)")
             else:
                 categories.append("quant (other)")
-        elif "china" in combined or "cn" in combined:
+        elif is_china:
             categories.append("finance (China)")
+        elif is_us:
+            categories.append("finance (US)")
         else:
             categories.append("other")
     return f"{len(internships)}x: " + ", ".join(categories)
@@ -600,8 +606,8 @@ def _offer_browser_submit(body: str, local_path: str) -> None:
 
         console.print(f"  [dim]Local backup: {local_path}[/dim]")
     else:
-        console.print(f"\n  [dim]Submit later with:[/dim]")
-        console.print(f"  [bold]quantpath contribute-upload[/bold]")
+        console.print("\n  [dim]Submit later with:[/dim]")
+        console.print("  [bold]quantpath contribute-upload[/bold]")
 
 
 def cmd_contribute_upload(args: argparse.Namespace) -> None:
