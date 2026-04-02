@@ -973,7 +973,11 @@ def cmd_match(args: argparse.Namespace) -> None:
             console.print(f"  P(Admit): [{pcolor}]{lr_pred.prob:.0%}[/{pcolor}]{ci_str}{bc_flag}")
 
         if match.missing:
-            console.print(f"  [red]Missing:[/red] {', '.join(match.missing)}")
+            missing_names = [
+                m.get("category", m.get("name", str(m))) if isinstance(m, dict) else str(m)
+                for m in match.missing
+            ]
+            console.print(f"  [red]Missing:[/red] {', '.join(missing_names)}")
         if match.warnings:
             for w in match.warnings:
                 console.print(f"  [yellow]⚠️  {w}[/yellow]")
