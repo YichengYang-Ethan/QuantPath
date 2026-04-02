@@ -635,3 +635,140 @@ def predict_prob_v2(
         prob_high=prob_high,
         is_bias_corrected=is_corrected,
     )
+
+
+# ===================================================================
+# V2 RAW — GPBoost raw prediction without bias correction
+# ===================================================================
+
+def _get_v2_raw(
+    program_id: str,
+    gpa: Optional[float],
+    gre: Optional[float],
+    profile: Optional["UserProfile"],
+) -> Optional[float]:
+    """Return v2 RAW probability (before bias correction).
+
+    Used by the ensemble to extract v2's relative feature signal.
+    Returns None if GPBoost is unavailable or prediction fails.
+    """
+    bst, meta = _load_v2()
+    if bst is None or meta is None:
+        return None
+
+    import numpy as np
+
+    pid_map = meta.get("program_id_map", {})
+    pid = pid_map.get(program_id, -1)
+
+    features = _extract_v2_features(program_id, gpa, gre, profile, meta)
+    if features is None:
+        return None
+
+    try:
+        pred = bst.predict(
+            data=features,
+            group_data_pred=np.array([[pid]]),
+            predict_var=False,
+            pred_latent=False,
+        )
+        if isinstance(pred, dict):
+            return float(pred["response_mean"][0])
+        return float(pred[0])
+    except Exception:
+        return None
+
+
+# ===================================================================
+# ENSEMBLE — v1 base + v2 residual signal
+# ===================================================================
+
+# How much to amplify v2's residual signal.  v2's raw spread is only
+# ~0.15 logit between strong and weak applicants, so we scale it up
+# to give it meaningful influence on top of v1.
+_V2_SIGNAL_WEIGHT = 2.0
+
+# Cache for per-program v2 baselines (computed lazily).
+_v2_centers: dict[str, float] = {}
+
+
+def _get_v2_center(program_id: str) -> Optional[float]:
+    """Return the v2 raw prediction for a neutral/average applicant.
+
+    This per-program baseline lets the ensemble measure how much v2
+    thinks a *specific* applicant deviates from average at that program,
+    rather than relying on a single global constant.
+    """
+    if program_id in _v2_centers:
+        return _v2_centers[program_id]
+
+    # Neutral profile: international, unknown school, no experience
+    from .models import UserProfile
+    neutral = UserProfile(
+        is_international=True,
+        university="unknown",
+        majors=["finance"],
+    )
+    raw = _get_v2_raw(program_id, 3.70, None, neutral)
+    if raw is not None:
+        _v2_centers[program_id] = raw
+    return raw
+
+
+def predict_ensemble(
+    program_id: str,
+    gpa: Optional[float] = None,
+    gre: Optional[float] = None,
+    profile: Optional["UserProfile"] = None,
+) -> Optional[AdmitPrediction]:
+    """Ensemble prediction: v1 base + amplified v2 residual signal.
+
+    Strategy
+    --------
+    1. v1 provides the well-calibrated base with strong GPA/GRE
+       discrimination and profile adjustments.
+    2. v2's RAW prediction (before bias correction) captures richer
+       features (13-dim) that v1's profile adjustments approximate
+       only coarsely.
+    3. We extract v2's *residual* — how much v2 thinks this applicant
+       deviates from average *at this specific program* — and add it
+       to v1's logit.
+
+    Formula:  logit_final = logit(v1) + β × (logit(v2_raw) - logit(v2_center))
+
+    Falls back to v1-only if v2 is unavailable.
+    """
+    v1 = predict_prob_full(program_id, gpa, gre, profile)
+    if v1 is None:
+        return predict_prob_v2(program_id, gpa, gre, profile)
+
+    v2_raw = _get_v2_raw(program_id, gpa, gre, profile)
+    v2_center = _get_v2_center(program_id)
+    if v2_raw is None or v2_center is None:
+        return v1
+
+    # v2 residual: how much better/worse than average at THIS program
+    v2_residual = (
+        _logit(max(0.01, min(0.99, v2_raw)))
+        - _logit(max(0.01, min(0.99, v2_center)))
+    )
+
+    # Blend
+    v1_logit = _logit(max(0.001, min(0.999, v1.prob)))
+    final_logit = v1_logit + _V2_SIGNAL_WEIGHT * v2_residual
+    prob = round(max(0.001, min(0.999, _sigmoid(final_logit))), 4)
+
+    # CI: preserve v1's CI width
+    hw = (
+        abs(_logit(v1.prob_high) - _logit(v1.prob))
+        if v1.prob_high > v1.prob else 0.5
+    )
+    prob_low = round(max(0.0, _sigmoid(final_logit - hw)), 4)
+    prob_high = round(min(1.0, _sigmoid(final_logit + hw)), 4)
+
+    return AdmitPrediction(
+        prob=prob,
+        prob_low=prob_low,
+        prob_high=prob_high,
+        is_bias_corrected=v1.is_bias_corrected,
+    )

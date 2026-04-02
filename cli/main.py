@@ -113,7 +113,7 @@ def _quick_profile_interactive() -> str:
 
 def cmd_predict(args: argparse.Namespace) -> None:
     """Pure v2 model prediction — reach/target/safety without course evaluation."""
-    from core.lr_predictor import predict_prob_full, predict_prob_v2
+    from core.lr_predictor import predict_ensemble
 
     if args.profile:
         profile = load_profile(args.profile)
@@ -166,11 +166,7 @@ def cmd_predict(args: argparse.Namespace) -> None:
     for prog in programs:
         if prog.id not in _FOCUSED_PROGRAMS:
             continue
-        # v1 first (better per-applicant discrimination via GPA/GRE),
-        # fall back to v2 for programs without a v1 model.
-        pred = predict_prob_full(prog.id, profile.gpa, gre_quant, profile)
-        if pred is None:
-            pred = predict_prob_v2(prog.id, profile.gpa, gre_quant, profile)
+        pred = predict_ensemble(prog.id, profile.gpa, gre_quant, profile)
         if pred is None:
             skipped.append(prog.university + " " + (prog.full_name or prog.name))
             continue
