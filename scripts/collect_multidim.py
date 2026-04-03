@@ -322,13 +322,13 @@ def extract_research(text):
     t = text.lower()
     has_paper = None
     has_research = None
-    level = "none"
+    level = None  # None = not mentioned/unknown (distinct from "none" = confirmed no research)
     if any(w in t for w in ["published", "paper", "论文发表", "publication", "journal"]):
         has_paper = "yes"
         level = "published"
     if any(w in t for w in ["research", "科研", "研究", "ra ", "research assistant"]):
         has_research = "yes"
-        if level == "none":
+        if level is None:
             level = "relevant_experience"
     return has_paper, has_research, level
 
@@ -1120,7 +1120,7 @@ def pipeline_1p3a():
             has_research_raw = str(row.get("has_research", ""))
             hp = has_paper_raw if has_paper_raw not in ("", "nan", "不明") else None
             hr = has_research_raw if has_research_raw not in ("", "nan", "不明") else None
-            research_level = "none"
+            research_level = None  # unknown until evidence found
             if hp and hp in ("yes", "是"):
                 research_level = "published"
             elif hr and hr in ("yes", "是"):
@@ -1150,7 +1150,7 @@ def pipeline_1p3a():
                 "intern_relevance": intern_rel or "",
                 "has_paper": hp if hp and hp in ("yes", "是") else "",
                 "has_research": hr if hr and hr in ("yes", "是") else "",
-                "research_level": research_level,
+                "research_level": research_level or "",
                 "gender": gender or "",
                 "nationality": nationality or "",
                 "raw_text": row_text[:2000].replace("\n", " ").replace(",", ";"),
@@ -1201,7 +1201,7 @@ def pipeline_1p3a():
             has_research_raw = str(row.get("has_research", ""))
             hp = "yes" if has_paper_raw in ("是", "yes") else ""
             hr = "yes" if has_research_raw in ("是", "yes") else ""
-            research_level = "published" if hp else ("relevant_experience" if hr else "none")
+            research_level = "published" if hp else ("relevant_experience" if hr else "")
             season = str(row.get("season", ""))
             if season == "nan":
                 season = ""
@@ -1227,7 +1227,7 @@ def pipeline_1p3a():
                 "intern_relevance": intern_rel or "",
                 "has_paper": hp,
                 "has_research": hr,
-                "research_level": research_level,
+                "research_level": research_level or "",
                 "gender": "",
                 "nationality": nationality or "chinese",
                 "raw_text": row_text[:2000].replace("\n", " ").replace(",", ";"),

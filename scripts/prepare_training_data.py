@@ -333,9 +333,9 @@ def standardize(df):
         lambda x: standardize_field(x, INTERN_RELEVANCE_CANONICAL, "")
     )
 
-    # Research level
+    # Research level — empty/missing stays "" (unknown), not "none" (confirmed no research)
     df["research_level"] = df["research_level"].apply(
-        lambda x: standardize_field(x, RESEARCH_LEVEL_CANONICAL, "none")
+        lambda x: standardize_field(x, RESEARCH_LEVEL_CANONICAL, "")
     )
 
     # Nationality
@@ -415,8 +415,9 @@ def generate_feature_matrix(df):
     # Intern count
     features["intern_count"] = pd.to_numeric(model_df["intern_count"], errors="coerce")
 
-    # Research score
+    # Research score — treat unknown ("") as NaN, not 0
     features["research_score"] = model_df["research_level"].map(RESEARCH_SCORE)
+    features.loc[model_df["research_level"].isin(["", "none"]) | model_df["research_level"].isna(), "research_score"] = np.nan
 
     # Is international
     features["is_international"] = (~model_df["nationality"].isin(["us", ""])).astype(float)

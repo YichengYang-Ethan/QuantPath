@@ -349,7 +349,13 @@ def _extract_v2_features(
     profile: Optional["UserProfile"],
     meta: dict,
 ) -> Optional[Any]:
-    """Build the 13-feature vector for GPBoost v2 prediction."""
+    """Build the 13-feature vector for GPBoost v2 prediction.
+
+    Features (7 real + 6 indicators):
+        gpa_normalized, gre_quant, undergrad_tier_encoded, intern_score,
+        research_score, is_international, major_relevance_score,
+        has_gpa, has_gre, has_tier, has_intern, has_research, has_nationality
+    """
     import numpy as np
 
     # Map undergrad tier from profile
@@ -357,7 +363,6 @@ def _extract_v2_features(
     intern_score = np.nan
     research_score = np.nan
     is_international = np.nan
-    is_female = np.nan
     major_relevance = np.nan
 
     if profile is not None:
@@ -527,9 +532,10 @@ def _extract_v2_features(
     has_gre = 0.0 if gre is None else 1.0
     has_tier = 0.0 if np.isnan(undergrad_tier) else 1.0
     has_intern = 0.0 if np.isnan(intern_score) else 1.0
+    has_research = 0.0 if np.isnan(research_score) else 1.0
     has_nat = 0.0 if np.isnan(is_international) else 1.0
 
-    # Feature vector (must match training order)
+    # Feature vector (must match training order — see train_model_v2.py)
     features = np.array([[
         gpa if gpa is not None else np.nan,       # gpa_normalized
         gre if gre is not None else np.nan,        # gre_quant
@@ -537,12 +543,12 @@ def _extract_v2_features(
         intern_score,                               # intern_score
         research_score,                             # research_score
         is_international,                           # is_international
-        is_female,                                  # is_female
         major_relevance,                            # major_relevance_score
         has_gpa,                                    # has_gpa
         has_gre,                                    # has_gre
         has_tier,                                   # has_tier
         has_intern,                                 # has_intern
+        has_research,                               # has_research
         has_nat,                                    # has_nationality
     ]])
     return features

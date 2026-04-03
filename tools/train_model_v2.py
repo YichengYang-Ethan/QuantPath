@@ -33,7 +33,7 @@ _FEATURE_MATRIX = _PROJECT_ROOT / "data" / "admissions" / "feature_matrix.csv"
 _PROGRAM_YAML_DIR = _PROJECT_ROOT / "data" / "programs"
 _OUTPUT_MODEL = _PROJECT_ROOT / "data" / "models" / "admission_model_v2.json"
 
-# Features to use
+# Features to use (removed is_female: 96% NaN, no signal)
 FEATURE_COLS = [
     "gpa_normalized",
     "gre_quant",
@@ -41,17 +41,27 @@ FEATURE_COLS = [
     "intern_score",
     "research_score",
     "is_international",
-    "is_female",
     "major_relevance_score",
 ]
 
-# Missing indicator columns (added during preprocessing)
+# Missing indicator columns (added has_research for the NaN-fixed research_score)
 MISSING_INDICATOR_COLS = [
     "has_gpa",
     "has_gre",
     "has_tier",
     "has_intern",
+    "has_research",
     "has_nationality",
+]
+
+# Core features used for sample weighting — these are what our users always provide
+CORE_WEIGHT_FEATURES = [
+    "gpa_normalized",
+    "undergrad_tier_encoded",
+    "intern_score",
+    "research_score",
+    "is_international",
+    "major_relevance_score",
 ]
 
 # Real acceptance rates from program YAMLs (for bias correction)
@@ -108,23 +118,19 @@ def load_data() -> pd.DataFrame:
                 "T50": 4, "top_intl": 2, "intl": 4, "other_cn": 5, "other": 5}
     df["undergrad_tier_encoded"] = df["undergrad_tier"].map(tier_map)
 
-    # Intern score
+    # Intern score — NaN for unknown (empty/none)
     intern_map = {"us_top_quant": 10, "us_quant": 8, "us_bb": 7, "us_finance": 6,
-                  "cn_top": 6, "us_tech": 5, "cn_finance": 4, "other": 2, "none": 0}
+                  "cn_top": 6, "us_tech": 5, "cn_finance": 4, "other": 2}
     df["intern_score"] = df["intern_level"].map(intern_map)
 
-    # Research score
-    research_map = {"published": 3, "significant": 2, "minor": 1, "none": 0}
-    df["research_score"] = df["research_level"].map(research_map).fillna(0)
+    # Research score — NaN for unknown; "none" from scraper = unknown, not confirmed zero
+    research_map = {"published": 3, "significant": 2, "minor": 1}
+    df["research_score"] = df["research_level"].map(research_map)
 
     # International flag
     nat_intl = {"chinese": 1, "indian": 1, "korean": 1, "other_asian": 1,
                 "european": 1, "other": 1, "us": 0}
     df["is_international"] = df["nationality"].map(nat_intl)
-
-    # Gender
-    df["is_female"] = (df["gender"] == "F").astype(float)
-    df.loc[df["gender"].isna() | (df["gender"] == "unknown"), "is_female"] = np.nan
 
     # Major relevance
     df["major_relevance_score"] = pd.to_numeric(df.get("major_relevance"), errors="coerce")
@@ -134,9 +140,18 @@ def load_data() -> pd.DataFrame:
     df["has_gre"] = (~df["gre_quant"].isna()).astype(float)
     df["has_tier"] = (~df["undergrad_tier_encoded"].isna()).astype(float)
     df["has_intern"] = (~df["intern_score"].isna()).astype(float)
+    df["has_research"] = (~df["research_score"].isna()).astype(float)
     df["has_nationality"] = (~df["is_international"].isna()).astype(float)
 
+    # Sample weights: prioritize feature-complete records (mirrors our user profiles)
+    n_present = sum(df[col].notna().astype(float) for col in CORE_WEIGHT_FEATURES)
+    df["sample_weight"] = 1.0 + n_present  # range [1, 7]
+
     print(f"  Program map: {len(PROGRAM_ID_MAP)} programs")
+    weight_dist = df.groupby("sample_weight").size()
+    print(f"  Sample weight distribution:")
+    for w, n in weight_dist.items():
+        print(f"    weight={w:.0f}: {n} samples ({n*w:.0f} effective)")
     return df
 
 
@@ -180,43 +195,73 @@ def build_program_maps(df: pd.DataFrame) -> None:
     print(f"  Program map: {len(PROGRAM_ID_MAP)} programs")
 
 
+def _oversample_rich(X, y, group_data, weights, threshold=4):
+    """Duplicate feature-rich records (weight >= threshold) to amplify their signal.
+
+    GPBoost doesn't natively support per-sample weights with bernoulli_logit.
+    Conservative 2x duplication of rich records avoids Eigen singularity issues
+    while still biasing the model toward complete-data patterns.
+    """
+    rich_mask = weights >= threshold
+    if not rich_mask.any():
+        return X, y, group_data
+    X_rich = X[rich_mask]
+    y_rich = y[rich_mask]
+    g_rich = group_data[rich_mask]
+    X_out = np.vstack([X, X_rich])
+    y_out = np.concatenate([y, y_rich])
+    g_out = np.concatenate([group_data, g_rich])
+    return X_out, y_out, g_out
+
+
+def _get_params() -> dict:
+    """GPBoost hyperparameters — tuned for weighted, sparse-feature data."""
+    return {
+        "objective": "binary",
+        "metric": "binary_logloss",
+        "num_leaves": 15,
+        "min_data_in_leaf": 30,       # up from 20: more conservative with weighted data
+        "learning_rate": 0.05,
+        "feature_fraction": 0.8,
+        "lambda_l1": 0.2,             # up from 0.1: regularize harder on sparse features
+        "lambda_l2": 2.0,             # up from 1.0: reduce overfitting to weighted outliers
+        "verbose": -1,
+        "num_threads": 4,
+    }
+
+
 def train_gpboost(df: pd.DataFrame) -> tuple:
-    """Train the GPBoost model."""
+    """Train the GPBoost model with sample weights."""
     feature_cols = FEATURE_COLS + MISSING_INDICATOR_COLS
     X = df[feature_cols].values
     y = df["result_binary"].values
+    weights = df["sample_weight"].values
     group_data = df["program_id"].values.reshape(-1, 1)
 
-    # Create GPModel with random intercept per program
     gp_model = gpb.GPModel(
         group_data=group_data,
         likelihood="bernoulli_logit",
     )
 
-    # Conservative parameters for ~10K samples
-    params = {
-        "objective": "binary",
-        "metric": "binary_logloss",
-        "num_leaves": 15,
-        "min_data_in_leaf": 20,
-        "learning_rate": 0.05,
-        "feature_fraction": 0.8,
-        "lambda_l1": 0.1,
-        "lambda_l2": 1.0,
-        "verbose": -1,
-        "num_threads": 4,
-    }
+    # Duplicate feature-rich records to amplify their signal
+    X_os, y_os, g_os = _oversample_rich(X, y, group_data, weights)
 
-    dataset = gpb.Dataset(X, y)
+    gp_model = gpb.GPModel(
+        group_data=g_os,
+        likelihood="bernoulli_logit",
+    )
 
+    dataset = gpb.Dataset(X_os, y_os)
+
+    n_rich = int((weights >= 4).sum())
     print("Training GPBoost model...")
-    print(f"  Samples: {len(y)}")
+    print(f"  Samples: {len(y)} → {len(y_os)} (+{n_rich} rich duplicates)")
     print(f"  Features: {len(feature_cols)}")
     print(f"  Programs: {len(np.unique(group_data))}")
-    print(f"  Accept rate: {y.mean():.1%}")
+    print(f"  Accept rate: {y_os.mean():.1%}")
 
     bst = gpb.train(
-        params=params,
+        params=_get_params(),
         train_set=dataset,
         gp_model=gp_model,
         num_boost_round=300,
@@ -226,10 +271,11 @@ def train_gpboost(df: pd.DataFrame) -> tuple:
 
 
 def evaluate_cv(df: pd.DataFrame, n_folds: int = 5) -> dict:
-    """Run stratified K-fold cross-validation."""
+    """Run stratified K-fold cross-validation with sample weights."""
     feature_cols = FEATURE_COLS + MISSING_INDICATOR_COLS
     X = df[feature_cols].values
     y = df["result_binary"].values
+    weights = df["sample_weight"].values
     group_data = df["program_id"].values.reshape(-1, 1)
 
     skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=42)
@@ -240,41 +286,31 @@ def evaluate_cv(df: pd.DataFrame, n_folds: int = 5) -> dict:
     for fold, (train_idx, test_idx) in enumerate(skf.split(X, y)):
         X_train, X_test = X[train_idx], X[test_idx]
         y_train, y_test = y[train_idx], y[test_idx]
+        w_train = weights[train_idx]
         g_train = group_data[train_idx]
         g_test = group_data[test_idx]
 
+        # Oversample rich training data
+        X_os, y_os, g_os = _oversample_rich(X_train, y_train, g_train, w_train)
+
         gp_model = gpb.GPModel(
-            group_data=g_train,
+            group_data=g_os,
             likelihood="bernoulli_logit",
         )
 
-        params = {
-            "objective": "binary",
-            "metric": "binary_logloss",
-            "num_leaves": 15,
-            "min_data_in_leaf": 20,
-            "learning_rate": 0.05,
-            "feature_fraction": 0.8,
-            "lambda_l1": 0.1,
-            "lambda_l2": 1.0,
-            "verbose": -1,
-        }
-
         bst = gpb.train(
-            params=params,
-            train_set=gpb.Dataset(X_train, y_train),
+            params=_get_params(),
+            train_set=gpb.Dataset(X_os, y_os),
             gp_model=gp_model,
             num_boost_round=300,
         )
 
-        # Predict
         pred = bst.predict(
             data=X_test,
             group_data_pred=g_test,
             predict_var=False,
             pred_latent=False,
         )
-        # GPBoost predict returns dict with 'response_mean'
         if isinstance(pred, dict):
             probs = pred["response_mean"]
         else:
@@ -283,7 +319,6 @@ def evaluate_cv(df: pd.DataFrame, n_folds: int = 5) -> dict:
         probs = np.clip(probs, 0.001, 0.999)
         all_preds[test_idx] = probs
 
-        # Metrics
         auc = roc_auc_score(y_test, probs)
         brier = brier_score_loss(y_test, probs)
         fold_metrics.append({"fold": fold + 1, "auc": auc, "brier": brier, "n": len(y_test)})
@@ -298,7 +333,23 @@ def evaluate_cv(df: pd.DataFrame, n_folds: int = 5) -> dict:
     print(f"\n  Overall AUC:   {overall_auc:.4f} (avg across folds: {avg_auc:.4f})")
     print(f"  Overall Brier: {overall_brier:.4f} (avg across folds: {avg_brier:.4f})")
 
-    # Per-program metrics (top programs)
+    # ── Stratified evaluation: feature completeness ──
+    n_present = df["sample_weight"].values - 1  # weight = 1 + n_features
+    strata = [(0, 1, "sparse (0-1 features)"), (2, 3, "medium (2-3 features)"),
+              (4, 6, "rich (4-6 features)")]
+    print("\n  Feature-Completeness Stratified:")
+    strata_results = {}
+    for lo, hi, label in strata:
+        mask = (n_present >= lo) & (n_present <= hi)
+        if mask.sum() < 20 or len(np.unique(y[mask])) < 2:
+            print(f"    {label:30} n={mask.sum():5d}  (too few for metrics)")
+            continue
+        auc_s = roc_auc_score(y[mask], all_preds[mask])
+        brier_s = brier_score_loss(y[mask], all_preds[mask])
+        strata_results[label] = {"auc": round(auc_s, 4), "brier": round(brier_s, 4), "n": int(mask.sum())}
+        print(f"    {label:30} AUC={auc_s:.4f}  Brier={brier_s:.4f}  n={mask.sum()}")
+
+    # ── Per-program metrics ──
     program_ids = df["program_id"].values
     print("\n  Per-Program Metrics (programs with 50+ samples):")
     for pid in sorted(np.unique(program_ids)):
@@ -314,7 +365,15 @@ def evaluate_cv(df: pd.DataFrame, n_folds: int = 5) -> dict:
         name = PROGRAM_NAME_MAP.get(pid, str(pid))
         print(f"    {name:25} AUC={auc_p:.3f}  Brier={brier_p:.3f}  n={mask.sum()}")
 
-    # Feature importance
+    # ── Calibration: predicted prob bins vs actual rate ──
+    print("\n  Calibration (predicted prob → actual rate):")
+    for lo, hi in [(0, 0.2), (0.2, 0.4), (0.4, 0.6), (0.6, 0.8), (0.8, 1.0)]:
+        mask = (all_preds >= lo) & (all_preds < hi)
+        if mask.sum() > 0:
+            actual = y[mask].mean()
+            pred_mean = all_preds[mask].mean()
+            print(f"    [{lo:.0%}-{hi:.0%}): pred_avg={pred_mean:.1%}  actual={actual:.1%}  n={mask.sum()}")
+
     return {
         "overall_auc": overall_auc,
         "overall_brier": overall_brier,
@@ -322,6 +381,7 @@ def evaluate_cv(df: pd.DataFrame, n_folds: int = 5) -> dict:
         "avg_brier": avg_brier,
         "fold_metrics": fold_metrics,
         "predictions": all_preds.tolist(),
+        "strata": strata_results,
     }
 
 
